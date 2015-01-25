@@ -2,7 +2,6 @@ package lightsensor.develops.denis.lightsensor;
 
 import android.app.Activity;
 import android.content.res.Configuration;
-import android.graphics.Bitmap;
 import android.graphics.ImageFormat;
 import android.hardware.Camera;
 import android.hardware.Camera.CameraInfo;
@@ -14,7 +13,6 @@ import android.os.Bundle;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.ViewGroup.LayoutParams;
-import android.widget.ImageView;
 import android.widget.TextView;
 
 import java.io.IOException;
@@ -27,6 +25,15 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
     private SurfaceView preview;
     private SurfaceHolder surfaceHolder;
 
+    public static float getMiddleIntense(byte[] data, int width, int height) {
+        long sum = 0;
+        int size = width * height;
+        for (int i = 0; i < size; i++) {
+            sum += data[i] & 0xFF;
+        }
+        return sum / size;
+    }
+
     @Override
     protected void onResume() {
         super.onResume();
@@ -38,6 +45,11 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
                 Camera.Parameters params = camera.getParameters();
                 params.setColorEffect(Camera.Parameters.EFFECT_MONO);
                 params.setPreviewFormat(ImageFormat.NV21);
+                if (params.isAutoExposureLockSupported()) {
+                    params.setAutoExposureLock(true);
+                    params.setExposureCompensation(1);
+                }
+
                 camera.setParameters(params);
                 return;
             }
@@ -105,40 +117,42 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
-        try {
-            if (camera != null) {
+        if (camera != null) {
+            try {
+
                 camera.setPreviewDisplay(holder);
                 camera.setPreviewCallback(this);
+
+
+                Camera.Size previewSize = camera.getParameters().getPreviewSize();
+                float aspect = (float) previewSize.width / previewSize.height;
+
+                int previewSurfaceWidth = preview.getWidth();
+                int previewSurfaceHeight = preview.getHeight();
+
+                LayoutParams lp = preview.getLayoutParams();
+
+                // здесь корректируем размер отображаемого preview, чтобы не было искажений
+
+                if (this.getResources().getConfiguration().orientation != Configuration.ORIENTATION_LANDSCAPE) {
+                    // портретный вид
+                    camera.setDisplayOrientation(90);
+                    lp.height = previewSurfaceHeight;
+                    lp.width = (int) (previewSurfaceHeight / aspect);
+
+                } else {
+                    // ландшафтный
+                    camera.setDisplayOrientation(0);
+                    lp.width = previewSurfaceWidth;
+                    lp.height = (int) (previewSurfaceWidth / aspect);
+                }
+
+                preview.setLayoutParams(lp);
+                camera.startPreview();
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-        } catch (IOException e) {
-            e.printStackTrace();
         }
-
-        Camera.Size previewSize = camera.getParameters().getPreviewSize();
-        float aspect = (float) previewSize.width / previewSize.height;
-
-        int previewSurfaceWidth = preview.getWidth();
-        int previewSurfaceHeight = preview.getHeight();
-
-        LayoutParams lp = preview.getLayoutParams();
-
-        // здесь корректируем размер отображаемого preview, чтобы не было искажений
-
-        if (this.getResources().getConfiguration().orientation != Configuration.ORIENTATION_LANDSCAPE) {
-            // портретный вид
-            camera.setDisplayOrientation(90);
-            lp.height = previewSurfaceHeight;
-            lp.width = (int) (previewSurfaceHeight / aspect);
-
-        } else {
-            // ландшафтный
-            camera.setDisplayOrientation(0);
-            lp.width = previewSurfaceWidth;
-            lp.height = (int) (previewSurfaceWidth / aspect);
-        }
-
-        preview.setLayoutParams(lp);
-        camera.startPreview();
     }
 
     @Override
@@ -151,21 +165,17 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 
     }
 
-    public static float getMiddleIntense(byte [] data, int width, int height) {
-        long sum = 0;
-        int size = width*height;
-        for(int i = 0; i < size; i++) {
-            sum += data[i] & 0xFF;
-        }
-        return sum / size;
-    }
-
     @Override
     public void onPreviewFrame(byte[] data, Camera camera) {
         Camera.Parameters params = camera.getParameters();
         int exposition = params.getExposureCompensation();
         TextView text = (TextView) findViewById(R.id.textCameraLight);
         Camera.Size size = params.getPreviewSize();
-        text.setText("Expo:" + Integer.toString(exposition) + " Intense:" + Float.toString(this.getMiddleIntense(data, size.width, size.height)));
+        String OutString = "";
+        float intense = this.getMiddleIntense(data, size.width, size.height);
+        OutString += " Expo:" + Integer.toString(exposition);
+        OutString += " Intense:" + Float.toString(intense);
+        OutString += " Intense:" + Float.toString(10240 * intense / 255);
+        text.setText(OutString);
     }
 }
