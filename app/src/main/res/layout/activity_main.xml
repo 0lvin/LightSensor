@@ -13,15 +13,10 @@
             android:layout_height="wrap_content" android:id="@+id/textCameraLight"/>
         <SurfaceView
             android:layout_width="fill_parent"
-            android:layout_height="365dp"
+            android:layout_height="fill_parent"
             android:id="@+id/imageView"
             android:contentDescription="camera preview"
-            android:adjustViewBounds="true" />
-
-        <ImageView
-            android:layout_width="match_parent"
-            android:layout_height="fill_parent"
-            android:id="@+id/imageView2"
-            android:layout_gravity="center_horizontal" />
+            android:adjustViewBounds="true"
+            android:layout_weight="1.11" />
 
     </LinearLayout>
