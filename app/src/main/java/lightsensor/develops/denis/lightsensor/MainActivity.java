@@ -13,6 +13,7 @@ import android.os.Bundle;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.ViewGroup.LayoutParams;
+import android.widget.SeekBar;
 import android.widget.TextView;
 
 import java.io.IOException;
@@ -177,5 +178,8 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
         OutString += " Intense:" + Float.toString(intense);
         OutString += " Intense:" + Float.toString(10240 * intense / 255);
         text.setText(OutString);
+        SeekBar bar = (SeekBar) findViewById(R.id.seekBar);
+        bar.setProgress((int) intense);
+        bar.setMax(256);
     }
 }
