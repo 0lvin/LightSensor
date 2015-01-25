@@ -149,11 +149,34 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 
     }
 
+    /**
+     * Converts YUV420 NV21 to Y888 (RGB8888). The grayscale image still holds 3 bytes on the pixel.
+     *
+     * @param pixels output array with the converted array o grayscale pixels
+     * @param data byte array on YUV420 NV21 format.
+     * @param width pixels width
+     * @param height pixels height
+     */
+    public static void applyGrayScale(int [] pixels, byte [] data, int width, int height) {
+        int p;
+        int size = width*height;
+        for(int i = 0; i < size; i++) {
+            p = data[i] & 0xFF;
+            pixels[i] = 0xff000000 | p<<16 | p<<8 | p;
+        }
+    }
+
     @Override
     public void onPreviewFrame(byte[] data, Camera camera) {
         Camera.Parameters params = camera.getParameters();
         int exposition = params.getExposureCompensation();
         TextView text = (TextView) findViewById(R.id.textCameraLight);
         text.setText(Integer.toString(exposition));
+        Camera.Size size = params.getPreviewSize();
+        int[] pixels = new int[size.height * size.width];
+        this.applyGrayScale(pixels, data, size.width, size.height);
+        Bitmap bm = Bitmap.createBitmap(pixels, size.width, size.height, Bitmap.Config.ARGB_8888);
+        ImageView image = (ImageView) findViewById(R.id.imageView2);
+        image.setImageBitmap(bm);
     }
 }
