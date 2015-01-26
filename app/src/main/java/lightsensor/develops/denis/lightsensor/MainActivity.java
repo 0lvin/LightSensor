@@ -1,6 +1,7 @@
 package lightsensor.develops.denis.lightsensor;
 
 import android.app.Activity;
+import android.content.ContentResolver;
 import android.content.res.Configuration;
 import android.graphics.ImageFormat;
 import android.hardware.Camera;
@@ -10,9 +11,13 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
+import android.provider.Settings.SettingNotFoundException;
+import android.provider.Settings.System;
+import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.ViewGroup.LayoutParams;
+import android.widget.ProgressBar;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
@@ -22,6 +27,11 @@ import java.util.List;
 
 public class MainActivity extends Activity implements SurfaceHolder.Callback, Camera.PreviewCallback, Camera.AutoFocusCallback {
 
+    private ContentResolver cResolver;
+    private int brightness = 0;
+    private int magnitude = 10;
+    private ProgressBar bar;
+    private SeekBar magnitude_seek;
     private Camera camera = null;
     private SurfaceView preview;
     private SurfaceHolder surfaceHolder;
@@ -74,6 +84,15 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        //Get the content resolver
+        cResolver = getContentResolver();
+
+        bar = (ProgressBar) findViewById(R.id.brightnessValue);
+        magnitude_seek = (SeekBar) findViewById(R.id.magnitudeValue);
+        magnitude_seek.setMax(40);
+        magnitude_seek.setProgress(magnitude);
+
+        bar.setMax(256);
         preview = (SurfaceView) findViewById(R.id.imageView);
 
         surfaceHolder = preview.getHolder();
@@ -85,7 +104,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
         List<Sensor> sensors = sensorManager.getSensorList(Sensor.TYPE_LIGHT);
         if (sensors.size() == 0) {
             TextView text = (TextView) findViewById(R.id.textLight);
-            text.setText("no sensors");
+            text.setText("Light by sensor: no sensors");
         } else {
             final Sensor lightSensor = sensorManager.getDefaultSensor(Sensor.TYPE_LIGHT);
 
@@ -93,9 +112,9 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
             SensorEventListener listener = new SensorEventListener() {
                 @Override
                 public void onSensorChanged(SensorEvent event) {
-                    float lightQuantity = event.values[0];
+                    int lightQuantity = (int) event.values[0];
                     TextView text = (TextView) findViewById(R.id.textLight);
-                    text.setText(Float.toString(lightQuantity));
+                    text.setText("Light by sensor: " + Integer.toString(lightQuantity));
                 }
 
                 @Override
@@ -108,6 +127,16 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
             // one of the SensorManager.SENSOR_DELAY_* constants.
             sensorManager.registerListener(
                     listener, lightSensor, SensorManager.SENSOR_DELAY_UI);
+
+            try {
+                //Get the current system brightness
+                brightness = System.getInt(cResolver, System.SCREEN_BRIGHTNESS);
+            } catch (SettingNotFoundException e) {
+                //Throw an error case it couldn't be retrieved
+                Log.e("Error", "Cannot access system brightness");
+                e.printStackTrace();
+            }
+            bar.setProgress(brightness);
         }
     }
 
@@ -169,17 +198,31 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
     @Override
     public void onPreviewFrame(byte[] data, Camera camera) {
         Camera.Parameters params = camera.getParameters();
-        int exposition = params.getExposureCompensation();
-        TextView text = (TextView) findViewById(R.id.textCameraLight);
         Camera.Size size = params.getPreviewSize();
-        String OutString = "";
         float intense = this.getMiddleIntense(data, size.width, size.height);
-        OutString += " Expo:" + Integer.toString(exposition);
-        OutString += " Intense:" + Float.toString(intense);
-        OutString += " Intense:" + Float.toString(10240 * intense / 255);
-        text.setText(OutString);
-        SeekBar bar = (SeekBar) findViewById(R.id.seekBar);
-        bar.setProgress((int) intense);
-        bar.setMax(256);
+        TextView text = (TextView) findViewById(R.id.textCameraLight);
+        text.setText("Light by camera: " + Integer.toString((int) (10240 * intense / 255)));
+        try {
+            //Get the current system brightness
+            brightness = System.getInt(cResolver, System.SCREEN_BRIGHTNESS);
+        } catch (SettingNotFoundException e) {
+            //Throw an error case it couldn't be retrieved
+            Log.e("Error", "Cannot access system brightness");
+            e.printStackTrace();
+        }
+        magnitude = magnitude_seek.getProgress();
+        float magnitude_x = (((float)magnitude + 10) / 20);
+        float new_intense = intense * magnitude_x;
+
+        TextView textMagnitude = (TextView) findViewById(R.id.textMagnitude);
+        textMagnitude.setText(Float.toString(magnitude_x) + "x");
+        if (new_intense > 255) {
+            new_intense = 255;
+        }
+        if (Math.abs(new_intense - brightness) > 10) {
+            brightness = (int) ((brightness + new_intense) / 2);
+            bar.setProgress(brightness);
+            System.putInt(getContentResolver(), System.SCREEN_BRIGHTNESS, brightness);
+        }
     }
 }
