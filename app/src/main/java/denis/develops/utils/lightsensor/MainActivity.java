@@ -1,4 +1,4 @@
-package lightsensor.develops.denis.lightsensor;
+package denis.develops.utils.lightsensor;
 
 import android.app.Activity;
 import android.content.ContentResolver;
