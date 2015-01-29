@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-
     <string name="app_name">LightSensor</string>
-    <string name="hello_world">Hello world!</string>
-    <string name="action_settings">Settings</string>
-
+    <string name="sensor_light">Sensor light value</string>
+    <string name="camera_light">Camera light value</string>
+    <string name="magnitude_value">9.9x</string>
+    <string name="camera_preview">camera preview</string>
+    <string name="license_text">Created by Denis Pauk aka 0lvin 2015. Licensed as GPL2. Application can be used for any purpose as you wish.</string>
 </resources>

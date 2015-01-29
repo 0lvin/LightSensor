@@ -2,6 +2,7 @@ package lightsensor.develops.denis.lightsensor;
 
 import android.app.Activity;
 import android.content.ContentResolver;
+import android.content.Intent;
 import android.content.res.Configuration;
 import android.graphics.ImageFormat;
 import android.hardware.Camera;
@@ -10,12 +11,14 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.net.Uri;
 import android.os.Bundle;
 import android.provider.Settings.SettingNotFoundException;
 import android.provider.Settings.System;
 import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import android.view.View;
 import android.view.ViewGroup.LayoutParams;
 import android.widget.ProgressBar;
 import android.widget.SeekBar;
@@ -84,6 +87,16 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        TextView author = (TextView) findViewById(R.id.textViewAuthor);
+
+        author.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://0lvin.blogspot.com/"));
+                startActivity(browserIntent);
+            }
+        });
+
         //Get the content resolver
         cResolver = getContentResolver();
 
@@ -126,7 +139,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
             // Register the listener with the light sensor -- choosing
             // one of the SensorManager.SENSOR_DELAY_* constants.
             sensorManager.registerListener(
-                    listener, lightSensor, SensorManager.SENSOR_DELAY_UI);
+                    listener, lightSensor, SensorManager.SENSOR_DELAY_NORMAL);
 
             try {
                 //Get the current system brightness
@@ -153,7 +166,6 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
                 camera.setPreviewDisplay(holder);
                 camera.setPreviewCallback(this);
 
-
                 Camera.Size previewSize = camera.getParameters().getPreviewSize();
                 float aspect = (float) previewSize.width / previewSize.height;
 
@@ -162,16 +174,16 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 
                 LayoutParams lp = preview.getLayoutParams();
 
-                // здесь корректируем размер отображаемого preview, чтобы не было искажений
+                // fix orientation
 
                 if (this.getResources().getConfiguration().orientation != Configuration.ORIENTATION_LANDSCAPE) {
-                    // портретный вид
+                    // portrait
                     camera.setDisplayOrientation(90);
                     lp.height = previewSurfaceHeight;
                     lp.width = (int) (previewSurfaceHeight / aspect);
 
                 } else {
-                    // ландшафтный
+                    // landscape
                     camera.setDisplayOrientation(0);
                     lp.width = previewSurfaceWidth;
                     lp.height = (int) (previewSurfaceWidth / aspect);
@@ -201,7 +213,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
         Camera.Size size = params.getPreviewSize();
         float intense = this.getMiddleIntense(data, size.width, size.height);
         TextView text = (TextView) findViewById(R.id.textCameraLight);
-        text.setText("Light by camera: " + Integer.toString((int) (10240 * intense / 255)));
+        text.setText("Light by camera: " + Integer.toString((int) (SensorManager.LIGHT_SHADE * intense / 255)));
         try {
             //Get the current system brightness
             brightness = System.getInt(cResolver, System.SCREEN_BRIGHTNESS);
@@ -211,7 +223,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
             e.printStackTrace();
         }
         magnitude = magnitude_seek.getProgress();
-        float magnitude_x = (((float)magnitude + 10) / 20);
+        float magnitude_x = (((float) magnitude + 10) / 20);
         float new_intense = intense * magnitude_x;
 
         TextView textMagnitude = (TextView) findViewById(R.id.textMagnitude);

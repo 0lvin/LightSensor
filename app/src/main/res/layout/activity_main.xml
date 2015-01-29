@@ -10,28 +10,56 @@
     android:weightSum="1"
     tools:context=".MainActivity">
 
-    <TextView
-        android:id="@+id/textLight"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/hello_world" />
-
-    <TextView
-        android:id="@+id/textCameraLight"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/hello_world" />
-
-    <TextView
-        android:id="@+id/textMagnitude"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/hello_world" />
-
-    <SeekBar
-        android:id="@+id/magnitudeValue"
+    <RelativeLayout
+        android:orientation="horizontal"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+        android:layout_height="wrap_content"
+        android:weightSum="1">
+        <TextView
+            android:id="@+id/textLight"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/sensor_light"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentRight="false"
+            android:layout_alignParentStart="true"
+            android:layout_alignParentTop="true" />
+
+        <TextView
+            android:id="@+id/textCameraLight"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/camera_light"
+            android:layout_alignParentStart="false"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentLeft="false"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentTop="true" />
+
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
+        <SeekBar
+            android:id="@+id/magnitudeValue"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentStart="true"
+            android:layout_alignParentLeft="true"
+            android:layout_toLeftOf="@+id/textMagnitude"
+            android:layout_toStartOf="@+id/textMagnitude" />
+
+        <TextView
+            android:id="@+id/textMagnitude"
+            android:layout_width="40dp"
+            android:layout_height="wrap_content"
+            android:text="@string/magnitude_value"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentEnd="true"
+            android:gravity="center_vertical|center_horizontal" />
+
+    </RelativeLayout>
 
     <ProgressBar
         style="?android:attr/progressBarStyleHorizontal"
@@ -43,9 +71,18 @@
     <SurfaceView
         android:id="@+id/imageView"
         android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
-        android:layout_weight="1.11"
+        android:layout_height="0dp"
+        android:layout_weight="0.92"
         android:adjustViewBounds="true"
-        android:contentDescription="camera preview" />
+        android:contentDescription="@string/camera_preview"
+        android:layout_gravity="center" />
+
+    <TextView
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:text="@string/license_text"
+        android:id="@+id/textViewAuthor"
+        android:layout_weight="0.03" />
 
 </LinearLayout>
