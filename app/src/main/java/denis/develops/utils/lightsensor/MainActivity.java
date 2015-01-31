@@ -32,8 +32,10 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 
     final String MAGNITUDE_VALUE = "MagnitudeValue";
     private ContentResolver cResolver;
-    private int brightness = 0;
-    private int magnitude = 10;
+    private int lastBrightnessValue = 0;
+    private int lastMagnitudeValue = 10;
+    private float lastLightSensorValue = 0;
+    private float lastCameraSensorValue = 0;
     private ProgressBar bar;
     private SeekBar magnitude_seek;
     private Camera camera = null;
@@ -42,6 +44,8 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
     private TextView textAuthor;
     private TextView textLightSensor;
     private boolean usedFront = false;
+    private boolean usedLightSensor = false;
+    private boolean usedBack = false;
     private TextView textCameraLight;
     private TextView textMagnitude;
 
@@ -75,7 +79,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
     }
 
     /*
-        returned camera, front camera proffered
+        returned camera, front camera preferred
      */
     private int getCameraId() {
         CameraInfo info = new CameraInfo();
@@ -91,7 +95,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
         for (int i = 0; i < Camera.getNumberOfCameras(); i++) {
             Camera.getCameraInfo(i, info);
             if (info.facing == CameraInfo.CAMERA_FACING_BACK) {
-                usedFront = false;
+                usedBack = true;
                 return i;
             }
         }
@@ -130,21 +134,30 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
         camera = null;
     }
 
+    private void updateTextValues() {
+        if (!this.usedLightSensor) {
+            textLightSensor.setText("Light by sensor: no sensors");
+        } else {
+            textLightSensor.setText("Light by sensor: " + Integer.toString((int) lastLightSensorValue));
+        }
+        textCameraLight.setText("Light by camera: " + Integer.toString((int) (SensorManager.LIGHT_OVERCAST * lastCameraSensorValue / 255)));
+        textMagnitude.setText(Float.toString(getMagnitude()) + "x");
+    }
+
     private void initLightSensor() {
         // Obtain references to the SensorManager and the Light Sensor
         final SensorManager sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         List<Sensor> sensors = sensorManager.getSensorList(Sensor.TYPE_LIGHT);
-        if (sensors.size() == 0) {
-            textLightSensor.setText("Light by sensor: no sensors");
-        } else {
+        if (sensors.size() > 0) {
+            usedLightSensor = true;
             final Sensor lightSensor = sensorManager.getDefaultSensor(Sensor.TYPE_LIGHT);
 
             // Implement a listener to receive updates
             SensorEventListener listener = new SensorEventListener() {
                 @Override
                 public void onSensorChanged(SensorEvent event) {
-                    int lightQuantity = (int) event.values[0];
-                    textLightSensor.setText("Light by sensor: " + Integer.toString(lightQuantity));
+                    lastLightSensorValue = event.values[0];
+                    updateTextValues();
                 }
 
                 @Override
@@ -187,36 +200,38 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
         this.updateBrightnessBar();
         this.easterEggInit();
 
+
         if (savedInstanceState != null) {
-            magnitude = savedInstanceState.getInt(this.MAGNITUDE_VALUE);
+            lastMagnitudeValue = savedInstanceState.getInt(this.MAGNITUDE_VALUE);
         }
 
         magnitude_seek.setMax(40);
-        magnitude_seek.setProgress(magnitude);
+        magnitude_seek.setProgress(lastMagnitudeValue);
 
         bar.setMax(256);
-        bar.setProgress(this.brightness);
+        bar.setProgress(this.lastBrightnessValue);
 
         surfaceHolder = preview.getHolder();
         surfaceHolder.addCallback(this);
+        this.updateTextValues();
     }
 
     private void updateBrightnessBar() {
         try {
             //Get the current system brightness
-            brightness = System.getInt(cResolver, System.SCREEN_BRIGHTNESS);
+            lastBrightnessValue = System.getInt(cResolver, System.SCREEN_BRIGHTNESS);
         } catch (SettingNotFoundException e) {
             //Throw an error case it couldn't be retrieved
             Log.e("Error", "Cannot access system brightness");
             e.printStackTrace();
         }
-        bar.setProgress(brightness);
+        bar.setProgress(lastBrightnessValue);
     }
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        outState.putInt(this.MAGNITUDE_VALUE, this.magnitude);
+        outState.putInt(this.MAGNITUDE_VALUE, this.lastMagnitudeValue);
     }
 
     @Override
@@ -272,25 +287,41 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 
     }
 
+    private float getMagnitude() {
+        return (((float) lastMagnitudeValue + 10) / 20);
+    }
+
+    private void updateBrightness() {
+        float cameraLightValue = lastCameraSensorValue * getMagnitude();
+        float sensorLightValue = lastLightSensorValue / SensorManager.LIGHT_OVERCAST * 256;
+        if (!usedLightSensor) {
+            // we don't have such sensor so use value from camera
+            sensorLightValue = cameraLightValue;
+        }
+        // create something in the middle
+        int newBrightness = (int) ((sensorLightValue + cameraLightValue + lastBrightnessValue) / 3);
+        if (newBrightness > 255) {
+            newBrightness = 255;
+        }
+        // check difference, but don't do any changes if values similar
+        if (Math.abs(cameraLightValue - newBrightness) > 5) {
+            lastBrightnessValue = newBrightness;
+            bar.setProgress(lastBrightnessValue);
+            System.putInt(getContentResolver(), System.SCREEN_BRIGHTNESS, lastBrightnessValue);
+        }
+    }
+
     @Override
     public void onPreviewFrame(byte[] data, Camera camera) {
         Camera.Parameters params = camera.getParameters();
         Camera.Size size = params.getPreviewSize();
-        float intense = this.getMiddleIntense(data, size.width, size.height);
-        this.updateBrightnessBar();
-        textCameraLight.setText("Light by camera: " + Integer.toString((int) (SensorManager.LIGHT_OVERCAST * intense / 255)));
-        magnitude = magnitude_seek.getProgress();
-        float magnitude_x = (((float) magnitude + 10) / 20);
-        float new_intense = intense * magnitude_x;
+        lastCameraSensorValue = this.getMiddleIntense(data, size.width, size.height);
+        lastMagnitudeValue = magnitude_seek.getProgress();
 
-        textMagnitude.setText(Float.toString(magnitude_x) + "x");
-        if (new_intense > 255) {
-            new_intense = 255;
-        }
-        if (Math.abs(new_intense - brightness) > 10) {
-            brightness = (int) ((brightness + new_intense) / 2);
-            bar.setProgress(brightness);
-            System.putInt(getContentResolver(), System.SCREEN_BRIGHTNESS, brightness);
-        }
+        this.updateBrightnessBar();
+        this.updateTextValues();
+        this.updateBrightness();
+
+
     }
 }
