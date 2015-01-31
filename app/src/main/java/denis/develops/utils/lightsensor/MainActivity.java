@@ -135,13 +135,26 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
     }
 
     private void updateTextValues() {
+        String sensorText = getString(R.string.sensor_light);
         if (!this.usedLightSensor) {
-            textLightSensor.setText("Light by sensor: no sensors");
+            textLightSensor.setText(sensorText + getString(R.string.sensor_not_exist));
         } else {
-            textLightSensor.setText("Light by sensor: " + Integer.toString((int) lastLightSensorValue));
+            textLightSensor.setText(sensorText + Integer.toString((int) lastLightSensorValue));
         }
-        textCameraLight.setText("Light by camera: " + Integer.toString((int) (SensorManager.LIGHT_OVERCAST * lastCameraSensorValue / 255)));
+        String cameraText = getString(R.string.camera_light);
+        textCameraLight.setText(cameraText + Integer.toString((int) (SensorManager.LIGHT_OVERCAST * lastCameraSensorValue / 255)));
         textMagnitude.setText(Float.toString(getMagnitude()) + "x");
+        String stateText = getString(R.string.license_text) + "\n";
+        if (usedLightSensor) {
+            stateText += getString(R.string.used_light_sensor) + "\n";
+        }
+        if (usedBack) {
+            stateText += getString(R.string.used_back_camera) + "\n";
+        }
+        if (usedFront) {
+            stateText += getString(R.string.used_front_camera) + "\n";
+        }
+        textAuthor.setText(stateText);
     }
 
     private void initLightSensor() {

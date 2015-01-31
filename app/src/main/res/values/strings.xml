@@ -1,9 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">LightSensor</string>
-    <string name="sensor_light">Sensor light value</string>
-    <string name="camera_light">Camera light value</string>
+    <string name="sensor_light">Light by sensor:</string>
+    <string name="camera_light">Light by camera: </string>
     <string name="magnitude_value">9.9x</string>
     <string name="camera_preview">camera preview</string>
     <string name="license_text">Created by Denis Pauk aka 0lvin, 2015. Licensed as GPL2. Application can be used for any purpose as you wish.</string>
+    <string name="used_front_camera">Used front camera sensor.</string>
+    <string name="used_back_camera">Used back camera sensor.</string>
+    <string name="used_light_sensor">Used light sensor.</string>
+    <string name="sensor_not_exist">no sensors</string>
 </resources>
