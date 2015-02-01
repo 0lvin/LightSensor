@@ -11,42 +11,44 @@
     tools:context=".MainActivity">
 
     <RelativeLayout
-        android:orientation="horizontal"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:orientation="horizontal"
         android:weightSum="1">
+
         <TextView
             android:id="@+id/textLight"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/sensor_light"
             android:layout_alignParentLeft="true"
             android:layout_alignParentRight="false"
             android:layout_alignParentStart="true"
-            android:layout_alignParentTop="true" />
+            android:layout_alignParentTop="true"
+            android:text="@string/sensor_light" />
 
         <TextView
             android:id="@+id/textCameraLight"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/camera_light"
-            android:layout_alignParentStart="false"
             android:layout_alignParentEnd="true"
             android:layout_alignParentLeft="false"
             android:layout_alignParentRight="true"
-            android:layout_alignParentTop="true" />
+            android:layout_alignParentStart="false"
+            android:layout_alignParentTop="true"
+            android:text="@string/camera_light" />
 
     </RelativeLayout>
 
     <RelativeLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content">
+
         <SeekBar
             android:id="@+id/magnitudeValue"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_alignParentStart="true"
             android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true"
             android:layout_toLeftOf="@+id/textMagnitude"
             android:layout_toStartOf="@+id/textMagnitude" />
 
@@ -54,35 +56,40 @@
             android:id="@+id/textMagnitude"
             android:layout_width="40dp"
             android:layout_height="wrap_content"
-            android:text="@string/magnitude_value"
-            android:layout_alignParentRight="true"
             android:layout_alignParentEnd="true"
-            android:gravity="center_vertical|center_horizontal" />
+            android:layout_alignParentRight="true"
+            android:gravity="center_vertical|center_horizontal"
+            android:text="@string/magnitude_value" />
 
     </RelativeLayout>
 
     <ProgressBar
+        android:id="@+id/brightnessValue"
         style="?android:attr/progressBarStyleHorizontal"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:id="@+id/brightnessValue"
         android:layout_gravity="center_horizontal" />
 
     <SurfaceView
         android:id="@+id/imageView"
         android:layout_width="fill_parent"
-        android:layout_height="0dp"
-        android:layout_weight="0.92"
+        android:layout_height="fill_parent"
+        android:layout_gravity="center"
+        android:layout_weight="0.99"
         android:adjustViewBounds="true"
-        android:contentDescription="@string/camera_preview"
-        android:layout_gravity="center" />
+        android:contentDescription="@string/camera_preview" />
 
-    <TextView
+    <ScrollView
+        android:id="@+id/scrollView"
         android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceSmall"
-        android:text="@string/license_text"
-        android:id="@+id/textViewAuthor"
-        android:layout_weight="0.03" />
+        android:layout_height="60dp"
+        android:layout_weight="0.01">
 
+        <TextView
+            android:id="@+id/textViewAuthor"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/license_text"
+            android:textAppearance="?android:attr/textAppearanceSmall" />
+    </ScrollView>
 </LinearLayout>
