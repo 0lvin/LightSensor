@@ -8,6 +8,9 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <linux/videodev2.h>
+#include <sys/mman.h>
+#include <errno.h>
 
 
 #define DEVICE_NAME 		"/dev/lightsensor"
@@ -190,6 +193,221 @@ void update_lights(double value) {
 	}
 }
 
+int v4l_read_frame(int fd, char * image_memmory, size_t full_size) {
+	struct v4l2_buffer buf = {0};
+
+	buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+	buf.memory = V4L2_MEMORY_MMAP;
+
+	if (ioctl(fd, VIDIOC_DQBUF, &buf) < 0) {
+		return -1;
+	}
+	if (buf.index != 0) {
+		return -1;
+	}
+
+	int light = 0;
+	for (int i = 0; i < full_size; i += 2) {
+		light += image_memmory[i] & 0xFF;
+	}
+	int result = 2.0 * light / full_size;
+
+	if (ioctl(fd, VIDIOC_QBUF, &buf) < 0) {
+		return -1;
+	}
+
+	return result;
+}
+
+int v4l_wait_shot(int fd) {
+	for (;;) {
+		fd_set fds;
+		struct timeval tv;
+		int select_result;
+
+		FD_ZERO(&fds);
+		FD_SET(fd, &fds);
+
+		/* Timeout. */
+		tv.tv_sec = 2;
+		tv.tv_usec = 0;
+
+		select_result = select(fd + 1, &fds, NULL, NULL, &tv);
+
+		if (select_result == -1)
+		{
+			if (EINTR == errno)
+				continue;
+			return -1;
+		}
+
+		if (!select_result) {
+			// can't get frame
+			return -1;
+		}
+		return 0;
+	}
+}
+
+int v4l_check_capabilities(int fd) {
+	struct v4l2_capability cap = {0};
+	// capabilities
+	if (ioctl(fd, VIDIOC_QUERYCAP, &cap) < 0) {
+		return -1;
+	}
+	if (!(cap.capabilities & V4L2_CAP_VIDEO_CAPTURE)){
+		return -1;
+	}
+	if (!(cap.capabilities & V4L2_CAP_STREAMING)) {
+		return -1;
+	}
+	return 0;
+}
+
+int v4l_check_format(int fd) {
+	struct v4l2_format fmt = {0};
+	// set out format
+	int width = 320;
+	int height = 240;
+	fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+	fmt.fmt.pix.width = width;
+	fmt.fmt.pix.height = height;
+	fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_YUYV;
+	fmt.fmt.pix.field = V4L2_FIELD_INTERLACED;
+	if (ioctl(fd, VIDIOC_S_FMT, &fmt) < 0) {
+		return -1;
+	}
+	// fix sizes
+	int min;
+	min = fmt.fmt.pix.width * 2; //YUYV take 2 bytes for 1 pixel
+	if (fmt.fmt.pix.bytesperline < min)
+		fmt.fmt.pix.bytesperline = min;
+	min = fmt.fmt.pix.bytesperline * fmt.fmt.pix.height;
+	if (fmt.fmt.pix.sizeimage < min)
+		fmt.fmt.pix.sizeimage = min;
+
+	if (fmt.fmt.pix.width != width)
+		width = fmt.fmt.pix.width;
+
+	if (fmt.fmt.pix.height != height)
+		height = fmt.fmt.pix.height;
+	printf("%dx%d shot\n", width, height);
+	return 0;
+}
+
+int v4l_check_avaible_shots(int fd) {
+	// check avaible shots
+	struct v4l2_requestbuffers req = {0};
+	req.count = 1;
+	req.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+	req.memory = V4L2_MEMORY_MMAP;
+	if (ioctl(fd, VIDIOC_REQBUFS, &req) < 0) {
+		return -1;
+	}
+	printf("%d frames at once\n", req.count);
+	return 0;
+}
+
+int v4l_mmap_frame(int fd, char ** image_memmory, int * buf_length) {
+	if(!image_memmory || !buf_length) {
+		return -1;
+	}
+	// try mmap
+	struct v4l2_buffer buf = {0};
+	buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+	buf.memory = V4L2_MEMORY_MMAP;
+	buf.index = 0; // frame buffer position
+
+	if (ioctl(fd, VIDIOC_QUERYBUF, &buf) < 0) {
+		return -1;
+	}
+	*buf_length = buf.length;
+	*image_memmory = mmap(NULL /* start anywhere */ ,
+		buf.length, PROT_READ | PROT_WRITE  /* required */ ,
+		MAP_SHARED /* recommended */ ,
+		fd, buf.m.offset
+	);
+	if (MAP_FAILED == image_memmory) {
+		return -1;
+	}
+	printf("mmaped %d bytes\n", *buf_length);
+	return 0;
+}
+
+int v4l_start_capture(int fd) {
+	// start capture
+	struct v4l2_buffer buf_capture = {0};
+	buf_capture.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+	buf_capture.memory = V4L2_MEMORY_MMAP;
+	buf_capture.index = 0;
+
+	if (ioctl(fd, VIDIOC_QBUF, &buf_capture) < 0) {
+		return -1;
+	}
+	// let's begin
+	enum v4l2_buf_type type;
+	type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+
+	if (ioctl(fd, VIDIOC_STREAMON, &type) < 0) {
+		return -1;
+	}
+
+	return 0;
+}
+
+void v4l_stop_capture(int fd, char* image_memmory, int buf_length) {
+	enum v4l2_buf_type type;
+	type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+
+	if (ioctl(fd, VIDIOC_STREAMOFF, &type) < 0) {
+		printf("can't release device\n");
+	}
+	if (munmap(image_memmory, buf_length) < 0) {
+		printf("can't free memmory\n");
+	}
+}
+
+int v4l_cam_value(char*  device_name) {
+	int fd = open(device_name, O_RDWR | O_NONBLOCK /* required */);
+
+	if (v4l_check_capabilities(fd)) {
+		return -1;
+	}
+
+	if (v4l_check_format(fd)) {
+		return -1;
+	}
+
+	if(v4l_check_avaible_shots(fd)) {
+		return -1;
+	}
+
+	int buf_length = 0;
+	char* image_memmory = NULL;
+	if(v4l_mmap_frame(fd, &image_memmory, &buf_length)) {
+		return -1;
+	}
+
+	if(v4l_start_capture(fd)) {
+		v4l_stop_capture(fd, image_memmory, buf_length);
+		return -1;
+	}
+
+	int res = 0;
+	if(v4l_wait_shot(fd) == 0) {
+		res = v4l_read_frame(fd, image_memmory, buf_length);
+	}
+
+	v4l_stop_capture(fd, image_memmory, buf_length);
+
+	close(fd);
+	if (res >= 0) {
+		return (res * 10240.0) / 64.0; //64 - because auto
+	}
+
+	return res;
+}
+
 int main() {
 	int dev_fd = open(DEVICE_NAME, O_RDONLY);
 	if (dev_fd >= 0) {
@@ -225,9 +443,19 @@ int main() {
 	} else {
 		printf("Light sensor has not found.\n");
 	}
+	int cam_value = v4l_cam_value("/dev/video0");
+	if (cam_value >= 0) {
+		printf("v4l value = %d\n", cam_value);
+		sum_light += cam_value;
+		count_light ++;
+	}
+
 	if (count_light) {
 		sum_light = sum_light / count_light;
 	}
+
+	printf("Light value = %d lux\n", cam_value);
+
 	update_lights(sum_light);
 	// flashlight
 	// /sys/class/leds/flashlight/brightness
