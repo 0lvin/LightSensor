@@ -5,7 +5,7 @@
     <string name="camera_light">Камера:</string>
     <string name="magnitude_value">9.9x</string>
     <string name="camera_preview">превью камери</string>
-    <string name="license_text">Розроблено Denis Pauk aka 0lvin, 2015. Лицензовано під GPL2. Може бути викорастано як завгодно в межах здорового глузду.</string>
+    <string name="license_text">Розроблено Denis Pauk aka 0lvin та Mitrand, 2015. Лицензовано під GPL2. Може бути викорастано як завгодно в межах здорового глузду.</string>
     <string name="used_back_camera">Використовуется задня камера</string>
     <string name="used_front_camera">Використовуется фронтальна камера</string>
     <string name="used_light_sensor">Використовуется сенсор світла</string>
