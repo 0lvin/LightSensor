@@ -3,6 +3,7 @@ package denis.develops.utils.lightsensor;
 import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.graphics.ImageFormat;
 import android.hardware.Camera;
@@ -25,12 +26,15 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 
 import java.io.IOException;
+import java.util.Date;
 import java.util.List;
 
 
 public class MainActivity extends Activity implements SurfaceHolder.Callback, Camera.PreviewCallback, Camera.AutoFocusCallback {
 
+    final String PREFERENCES_NAME = "preferences";
     final String MAGNITUDE_VALUE = "MagnitudeValue";
+    final String RUNTIME_VALUE = "LastRunTime";
     private ContentResolver cResolver;
     private int lastBrightnessValue = 0;
     private int lastMagnitudeValue = 10;
@@ -48,6 +52,8 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
     private boolean usedBack = false;
     private TextView textCameraLight;
     private TextView textMagnitude;
+    private Date startTime;
+    private long lastTime;
 
     public static float getMiddleIntense(byte[] data, int width, int height) {
         long sum = 0;
@@ -124,6 +130,8 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 
     @Override
     protected void onPause() {
+        Date current = new Date();
+        long newTimeValue = this.lastTime + (current.getTime() - this.startTime.getTime()) / 1000;
         super.onPause();
         if (camera != null) {
             camera.setPreviewCallback(null);
@@ -132,9 +140,18 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
             camera = null;
         }
         camera = null;
+        SharedPreferences prefs = getSharedPreferences(this.PREFERENCES_NAME, MODE_PRIVATE);
+        SharedPreferences.Editor edit = prefs.edit();
+        edit.putInt(this.MAGNITUDE_VALUE, this.lastMagnitudeValue);
+        edit.putLong(this.RUNTIME_VALUE, newTimeValue);
+        edit.commit();
     }
 
     private void updateTextValues() {
+        Long usedSeconds = this.lastTime % 60;
+        Long usedMinutes = (this.lastTime / 60) % 60;
+        Long usedHours = (this.lastTime / 3600);
+
         String sensorText = getString(R.string.sensor_light);
         if (!this.usedLightSensor) {
             textLightSensor.setText(sensorText + getString(R.string.sensor_not_exist));
@@ -154,6 +171,10 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
         if (usedFront) {
             stateText += getString(R.string.used_front_camera) + "\n";
         }
+        stateText += getString(R.string.have_used_for) + " ";
+        stateText += Long.toString(usedHours) + " " + getString(R.string.hours) + " ";
+        stateText += Long.toString(usedMinutes) + " " + getString(R.string.minutes) + " ";
+        stateText += Long.toString(usedSeconds) + " " + getString(R.string.seconds) + ".\n";
         textAuthor.setText(stateText);
     }
 
@@ -213,9 +234,14 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
         this.updateBrightnessBar();
         this.easterEggInit();
 
-
+        this.startTime = new Date();
         if (savedInstanceState != null) {
-            lastMagnitudeValue = savedInstanceState.getInt(this.MAGNITUDE_VALUE);
+            lastMagnitudeValue = savedInstanceState.getInt(this.MAGNITUDE_VALUE, 10);
+            this.lastTime = savedInstanceState.getLong(this.RUNTIME_VALUE, 0);
+        } else {
+            SharedPreferences prefs = getSharedPreferences(this.PREFERENCES_NAME, MODE_PRIVATE);
+            lastMagnitudeValue = prefs.getInt(this.MAGNITUDE_VALUE, 5);
+            this.lastTime = prefs.getLong(this.RUNTIME_VALUE, 0);
         }
 
         magnitude_seek.setMax(40);
@@ -243,8 +269,12 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
+        Date current = new Date();
+        long newTimeValue = this.lastTime + (current.getTime() - this.startTime.getTime()) / 1000;
         super.onSaveInstanceState(outState);
         outState.putInt(this.MAGNITUDE_VALUE, this.lastMagnitudeValue);
+        outState.putLong(this.RUNTIME_VALUE, newTimeValue);
+        super.onSaveInstanceState(outState);
     }
 
     @Override

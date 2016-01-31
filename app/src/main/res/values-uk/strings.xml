@@ -10,4 +10,8 @@
     <string name="used_front_camera">Використовуется фронтальна камера</string>
     <string name="used_light_sensor">Використовуется сенсор світла</string>
     <string name="sensor_not_exist">немає</string>
+    <string name="have_used_for">Використовувалося</string>
+    <string name="hours">годин</string>
+    <string name="minutes">хвилин</string>
+    <string name="seconds">секунд</string>
 </resources>
