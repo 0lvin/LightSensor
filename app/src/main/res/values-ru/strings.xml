@@ -3,7 +3,7 @@
     <string name="app_name">Датчик освещения</string>
     <string name="camera_light">Камера:</string>
     <string name="camera_preview">Превью камеры</string>
-    <string name="license_text">Разрабочтик Denis Pauk aka Olvin и Mitrand,Лицензировано согласно GPLS2.</string>
+    <string name="license_text">Разрабочтик Denis Pauk aka Olvin и Mitrand, 2015-2016. Лицензировано согласно GPL2.</string>
     <string name="magnitude_value">9.9x</string>
     <string name="sensor_light">Сенсор:</string>
     <string name="sensor_not_exist">Нет</string>
@@ -13,4 +13,5 @@
     <string name="have_used_for">Использовалось</string>
     <string name="hours">часов</string>
     <string name="minutes">минут</string>
+    <string name="seconds">секунд</string>
 </resources>
