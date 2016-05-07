@@ -1,8 +1,11 @@
 package denis.develops.utils.lightsensor;
 
 import android.app.Activity;
+import android.content.BroadcastReceiver;
 import android.content.ContentResolver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.graphics.ImageFormat;
@@ -21,8 +24,10 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup.LayoutParams;
+import android.widget.CompoundButton;
 import android.widget.ProgressBar;
 import android.widget.SeekBar;
+import android.widget.Switch;
 import android.widget.TextView;
 
 import java.io.IOException;
@@ -35,6 +40,8 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
     final String PREFERENCES_NAME = "preferences";
     final String MAGNITUDE_VALUE = "MagnitudeValue";
     final String RUNTIME_VALUE = "LastRunTime";
+    final String EVENTS_NAME = "LightsSensors";
+    final String AUTO_VALUE = "AutoUpdeteOnEvent";
     private ContentResolver cResolver;
     private int lastBrightnessValue = 0;
     private int lastMagnitudeValue = 10;
@@ -54,6 +61,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
     private TextView textMagnitude;
     private Date startTime;
     private long lastTime;
+    private BroadcastReceiver mPowerKeyReceiver = null;
 
     public static float getMiddleIntense(byte[] data, int width, int height) {
         long sum = 0;
@@ -62,6 +70,35 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
             sum += data[i] & 0xFF;
         }
         return sum / size;
+    }
+
+    private void registBroadcastReceiver() {
+        if (mPowerKeyReceiver == null) {
+            Log.i(this.EVENTS_NAME, "receiver init!");
+            final IntentFilter theFilter = new IntentFilter();
+            /** System Defined Broadcast */
+            theFilter.addAction(Intent.ACTION_SCREEN_ON);
+            theFilter.addAction(Intent.ACTION_SCREEN_OFF);
+            theFilter.addAction(Intent.ACTION_USER_PRESENT);
+            this.mPowerKeyReceiver = new BroadcastReceiver() {
+                @Override
+                public void onReceive(Context context, Intent intent) {
+                    Log.i(EVENTS_NAME, "receiver event!");
+                    //System.putInt(getContentResolver(), System.SCREEN_BRIGHTNESS, 0);
+                    // > Your playground~!
+                }
+            };
+
+            getApplicationContext().registerReceiver(this.mPowerKeyReceiver, theFilter);
+        }
+    }
+
+    private void unregisterReceiver() {
+        if (this.mPowerKeyReceiver == null)
+            return;
+        Log.i(this.EVENTS_NAME, "receiver deinit!");
+        getApplicationContext().unregisterReceiver(mPowerKeyReceiver);
+        this.mPowerKeyReceiver = null;
     }
 
     private Camera.Size getMinimalPreviewSize(Camera.Parameters params) {
@@ -144,6 +181,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
         SharedPreferences.Editor edit = prefs.edit();
         edit.putInt(this.MAGNITUDE_VALUE, this.lastMagnitudeValue);
         edit.putLong(this.RUNTIME_VALUE, newTimeValue);
+        edit.putBoolean(this.AUTO_VALUE, mPowerKeyReceiver != null);
         edit.commit();
     }
 
@@ -228,6 +266,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
         bar = (ProgressBar) findViewById(R.id.brightnessValue);
         magnitude_seek = (SeekBar) findViewById(R.id.magnitudeValue);
         preview = (SurfaceView) findViewById(R.id.imageView);
+        Switch registerSwith = (Switch) findViewById(R.id.switchAuto);
         cResolver = getContentResolver();
 
         this.initLightSensor();
@@ -238,10 +277,12 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
         if (savedInstanceState != null) {
             lastMagnitudeValue = savedInstanceState.getInt(this.MAGNITUDE_VALUE, 10);
             this.lastTime = savedInstanceState.getLong(this.RUNTIME_VALUE, 0);
+            registerSwith.setChecked(savedInstanceState.getBoolean(this.AUTO_VALUE, false));
         } else {
             SharedPreferences prefs = getSharedPreferences(this.PREFERENCES_NAME, MODE_PRIVATE);
             lastMagnitudeValue = prefs.getInt(this.MAGNITUDE_VALUE, 5);
             this.lastTime = prefs.getLong(this.RUNTIME_VALUE, 0);
+            registerSwith.setChecked(prefs.getBoolean(this.AUTO_VALUE, false));
         }
 
         magnitude_seek.setMax(40);
@@ -253,6 +294,23 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
         surfaceHolder = preview.getHolder();
         surfaceHolder.addCallback(this);
         this.updateTextValues();
+
+        registerSwith.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                if (b) {
+                    registBroadcastReceiver();
+                } else {
+                    unregisterReceiver();
+                }
+            }
+        });
+        if (registerSwith.isChecked()) {
+            registBroadcastReceiver();
+        } else {
+            unregisterReceiver();
+        }
+        ;
     }
 
     private void updateBrightnessBar() {
@@ -274,6 +332,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
         super.onSaveInstanceState(outState);
         outState.putInt(this.MAGNITUDE_VALUE, this.lastMagnitudeValue);
         outState.putLong(this.RUNTIME_VALUE, newTimeValue);
+        outState.putBoolean(this.AUTO_VALUE, mPowerKeyReceiver != null);
         super.onSaveInstanceState(outState);
     }
 

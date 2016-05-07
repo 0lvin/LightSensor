@@ -70,14 +70,21 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal" />
 
+    <Switch
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:text="Auto fix on event"
+        android:id="@+id/switchAuto"
+        android:checked="false" />
+
     <SurfaceView
         android:id="@+id/imageView"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
         android:layout_gravity="center"
-        android:layout_weight="0.99"
         android:adjustViewBounds="true"
-        android:contentDescription="@string/camera_preview" />
+        android:contentDescription="@string/camera_preview"
+        android:layout_weight="0.54" />
 
     <ScrollView
         android:id="@+id/scrollView"
