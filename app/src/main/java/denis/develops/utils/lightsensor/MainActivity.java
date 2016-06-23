@@ -31,9 +31,9 @@ import android.widget.Switch;
 import android.widget.TextView;
 
 import java.io.IOException;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
-
 
 public class MainActivity extends Activity implements SurfaceHolder.Callback, Camera.PreviewCallback, Camera.AutoFocusCallback {
 
@@ -72,20 +72,24 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
         return sum / size;
     }
 
-    private void registBroadcastReceiver() {
+    private void registerBroadcastReceiver() {
         if (mPowerKeyReceiver == null) {
             Log.i(this.EVENTS_NAME, "receiver init!");
             final IntentFilter theFilter = new IntentFilter();
             /** System Defined Broadcast */
             theFilter.addAction(Intent.ACTION_SCREEN_ON);
-            theFilter.addAction(Intent.ACTION_SCREEN_OFF);
             theFilter.addAction(Intent.ACTION_USER_PRESENT);
             this.mPowerKeyReceiver = new BroadcastReceiver() {
                 @Override
                 public void onReceive(Context context, Intent intent) {
-                    Log.i(EVENTS_NAME, "receiver event!");
-                    //System.putInt(getContentResolver(), System.SCREEN_BRIGHTNESS, 0);
-                    // > Your playground~!
+                    Calendar curCalendar = Calendar.getInstance();
+                    Date curDate = curCalendar.getTime();
+                    int minutes = curDate.getHours() * 60 + curDate.getMinutes();
+                    double minInGr = minutes * 180 / 24 / 60;
+                    double value = Math.min(Math.sin(Math.toRadians(minInGr)) * 256 * getMagnitude(), 256);
+
+                    Log.i(EVENTS_NAME, "Set brightness to " + Double.toString(value));
+                    System.putInt(getContentResolver(), System.SCREEN_BRIGHTNESS, (int) value);
                 }
             };
 
@@ -145,9 +149,9 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
         return -1;
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
+    protected void init_camera() {
+        if (camera != null)
+            return;
 
         int cameraId = this.getCameraId();
         if (cameraId != -1) {
@@ -163,13 +167,17 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
             params.setPreviewSize(previewSize.width, previewSize.height);
             camera.setParameters(params);
         }
+
     }
 
     @Override
-    protected void onPause() {
-        Date current = new Date();
-        long newTimeValue = this.lastTime + (current.getTime() - this.startTime.getTime()) / 1000;
-        super.onPause();
+    protected void onResume() {
+        super.onResume();
+
+        this.init_camera();
+    }
+
+    protected void delete_camera() {
         if (camera != null) {
             camera.setPreviewCallback(null);
             camera.stopPreview();
@@ -177,6 +185,14 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
             camera = null;
         }
         camera = null;
+    }
+
+    @Override
+    protected void onPause() {
+        Date current = new Date();
+        long newTimeValue = this.lastTime + (current.getTime() - this.startTime.getTime()) / 1000;
+        super.onPause();
+        delete_camera();
         SharedPreferences prefs = getSharedPreferences(this.PREFERENCES_NAME, MODE_PRIVATE);
         SharedPreferences.Editor edit = prefs.edit();
         edit.putInt(this.MAGNITUDE_VALUE, this.lastMagnitudeValue);
@@ -299,18 +315,17 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
                 if (b) {
-                    registBroadcastReceiver();
+                    registerBroadcastReceiver();
                 } else {
                     unregisterReceiver();
                 }
             }
         });
         if (registerSwith.isChecked()) {
-            registBroadcastReceiver();
+            registerBroadcastReceiver();
         } else {
             unregisterReceiver();
         }
-        ;
     }
 
     private void updateBrightnessBar() {
@@ -423,7 +438,5 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
         this.updateBrightnessBar();
         this.updateTextValues();
         this.updateBrightness();
-
-
     }
 }
