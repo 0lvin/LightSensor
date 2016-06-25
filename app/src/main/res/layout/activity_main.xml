@@ -77,19 +77,10 @@
         android:id="@+id/switchAuto"
         android:checked="false" />
 
-    <SurfaceView
-        android:id="@+id/imageView"
-        android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
-        android:layout_gravity="center"
-        android:adjustViewBounds="true"
-        android:contentDescription="@string/camera_preview"
-        android:layout_weight="0.54" />
-
     <ScrollView
         android:id="@+id/scrollView"
         android:layout_width="fill_parent"
-        android:layout_height="60dp"
+        android:layout_height="50dp"
         android:layout_weight="0.01">
 
         <TextView
@@ -99,4 +90,13 @@
             android:text="@string/license_text"
             android:textAppearance="?android:attr/textAppearanceSmall" />
     </ScrollView>
+
+    <SurfaceView
+        android:id="@+id/imageView"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:layout_gravity="center"
+        android:adjustViewBounds="true"
+        android:contentDescription="@string/camera_preview"
+        android:layout_weight="0.54" />
 </LinearLayout>
