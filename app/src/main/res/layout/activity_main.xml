@@ -98,5 +98,6 @@
         android:layout_gravity="center"
         android:adjustViewBounds="true"
         android:contentDescription="@string/camera_preview"
-        android:layout_weight="0.54" />
+        android:layout_weight="0.54"
+        android:background="#000000" />
 </LinearLayout>
