@@ -73,7 +73,7 @@
     <Switch
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:text="Auto fix on event"
+        android:text="@string/auto_fix"
         android:id="@+id/switchAuto"
         android:checked="false" />
 

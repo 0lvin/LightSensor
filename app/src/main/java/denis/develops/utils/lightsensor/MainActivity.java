@@ -2,11 +2,12 @@ package denis.develops.utils.lightsensor;
 
 import android.app.Activity;
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.ContentResolver;
-import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.graphics.ImageFormat;
 import android.hardware.Camera;
@@ -17,7 +18,6 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.net.Uri;
 import android.os.Bundle;
-import android.provider.Settings.SettingNotFoundException;
 import android.provider.Settings.System;
 import android.util.Log;
 import android.view.SurfaceHolder;
@@ -31,7 +31,6 @@ import android.widget.Switch;
 import android.widget.TextView;
 
 import java.io.IOException;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
@@ -73,36 +72,51 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
     }
 
     private void registerBroadcastReceiver() {
-        if (mPowerKeyReceiver == null) {
-            Log.i(this.EVENTS_NAME, "receiver init!");
+        if (mPowerKeyReceiver != null)
+            return;
+        try {
+            Log.i(this.EVENTS_NAME, "Register unlock receiver.");
             final IntentFilter theFilter = new IntentFilter();
             /** System Defined Broadcast */
             theFilter.addAction(Intent.ACTION_SCREEN_ON);
             theFilter.addAction(Intent.ACTION_USER_PRESENT);
-            this.mPowerKeyReceiver = new BroadcastReceiver() {
-                @Override
-                public void onReceive(Context context, Intent intent) {
-                    Calendar curCalendar = Calendar.getInstance();
-                    Date curDate = curCalendar.getTime();
-                    int minutes = curDate.getHours() * 60 + curDate.getMinutes();
-                    double minInGr = minutes * 180 / 24 / 60;
-                    double value = Math.min(Math.sin(Math.toRadians(minInGr)) * 256 * getMagnitude(), 256);
-
-                    Log.i(EVENTS_NAME, "Set brightness to " + Double.toString(value));
-                    System.putInt(getContentResolver(), System.SCREEN_BRIGHTNESS, (int) value);
-                }
-            };
+            this.mPowerKeyReceiver = new UnlockReceiver();
 
             getApplicationContext().registerReceiver(this.mPowerKeyReceiver, theFilter);
+
+            // disable service on system level
+            ComponentName receiver = new ComponentName(getApplicationContext(), UnlockReceiver.class);
+            PackageManager pm = getApplicationContext().getPackageManager();
+
+            pm.setComponentEnabledSetting(receiver,
+                    PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
+                    PackageManager.DONT_KILL_APP);
+
+        } catch (Exception e) {
+            Log.e("Error", "Cannot access system brightness:" + e.toString());
         }
     }
 
     private void unregisterReceiver() {
         if (this.mPowerKeyReceiver == null)
             return;
-        Log.i(this.EVENTS_NAME, "receiver deinit!");
-        getApplicationContext().unregisterReceiver(mPowerKeyReceiver);
-        this.mPowerKeyReceiver = null;
+        try {
+            Log.i(this.EVENTS_NAME, "Unregister unlock receiver.");
+
+            getApplicationContext().unregisterReceiver(mPowerKeyReceiver);
+
+            this.mPowerKeyReceiver = null;
+
+            // disable service on system level
+            ComponentName receiver = new ComponentName(getApplicationContext(), UnlockReceiver.class);
+            PackageManager pm = getApplicationContext().getPackageManager();
+
+            pm.setComponentEnabledSetting(receiver,
+                    PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+                    PackageManager.DONT_KILL_APP);
+        } catch (Exception e) {
+            Log.e("Error", "Cannot access system brightness:" + e.toString());
+        }
     }
 
     private Camera.Size getMinimalPreviewSize(Camera.Parameters params) {
@@ -198,7 +212,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
         edit.putInt(this.MAGNITUDE_VALUE, this.lastMagnitudeValue);
         edit.putLong(this.RUNTIME_VALUE, newTimeValue);
         edit.putBoolean(this.AUTO_VALUE, mPowerKeyReceiver != null);
-        edit.commit();
+        edit.apply();
     }
 
     private void updateTextValues() {
@@ -282,7 +296,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
         bar = (ProgressBar) findViewById(R.id.brightnessValue);
         magnitude_seek = (SeekBar) findViewById(R.id.magnitudeValue);
         preview = (SurfaceView) findViewById(R.id.imageView);
-        Switch registerSwith = (Switch) findViewById(R.id.switchAuto);
+        Switch registerSwitch = (Switch) findViewById(R.id.switchAuto);
         cResolver = getContentResolver();
 
         this.initLightSensor();
@@ -293,12 +307,12 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
         if (savedInstanceState != null) {
             lastMagnitudeValue = savedInstanceState.getInt(this.MAGNITUDE_VALUE, 10);
             this.lastTime = savedInstanceState.getLong(this.RUNTIME_VALUE, 0);
-            registerSwith.setChecked(savedInstanceState.getBoolean(this.AUTO_VALUE, false));
+            registerSwitch.setChecked(savedInstanceState.getBoolean(this.AUTO_VALUE, false));
         } else {
             SharedPreferences prefs = getSharedPreferences(this.PREFERENCES_NAME, MODE_PRIVATE);
             lastMagnitudeValue = prefs.getInt(this.MAGNITUDE_VALUE, 5);
             this.lastTime = prefs.getLong(this.RUNTIME_VALUE, 0);
-            registerSwith.setChecked(prefs.getBoolean(this.AUTO_VALUE, false));
+            registerSwitch.setChecked(prefs.getBoolean(this.AUTO_VALUE, false));
         }
 
         magnitude_seek.setMax(40);
@@ -311,7 +325,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
         surfaceHolder.addCallback(this);
         this.updateTextValues();
 
-        registerSwith.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+        registerSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
                 if (b) {
@@ -321,7 +335,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
                 }
             }
         });
-        if (registerSwith.isChecked()) {
+        if (registerSwitch.isChecked()) {
             registerBroadcastReceiver();
         } else {
             unregisterReceiver();
@@ -332,10 +346,9 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
         try {
             //Get the current system brightness
             lastBrightnessValue = System.getInt(cResolver, System.SCREEN_BRIGHTNESS);
-        } catch (SettingNotFoundException e) {
+        } catch (Exception e) {
             //Throw an error case it couldn't be retrieved
-            Log.e("Error", "Cannot access system brightness");
-            e.printStackTrace();
+            Log.e("Error", "Cannot access system brightness:" + e.toString());
         }
         bar.setProgress(lastBrightnessValue);
     }
@@ -389,7 +402,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
                 preview.setLayoutParams(lp);
                 camera.startPreview();
             } catch (IOException e) {
-                e.printStackTrace();
+                Log.e("Error", "Cannot access system brightness:" + e.toString());
             }
         }
     }
@@ -415,11 +428,13 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
             // we don't have such sensor so use value from camera
             sensorLightValue = cameraLightValue;
         }
+
         // create something in the middle
         int newBrightness = (int) ((sensorLightValue + cameraLightValue + lastBrightnessValue) / 3);
         if (newBrightness > 255) {
             newBrightness = 255;
         }
+
         // check difference, but don't do any changes if values similar
         if (Math.abs(cameraLightValue - newBrightness) > 5) {
             lastBrightnessValue = newBrightness;

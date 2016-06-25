@@ -14,4 +14,5 @@
     <string name="hours">часов</string>
     <string name="minutes">минут</string>
     <string name="seconds">секунд</string>
+    <string name="auto_fix" >Обновлять на расблокировку по времени суток</string>
 </resources>
