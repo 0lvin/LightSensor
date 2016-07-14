@@ -11,6 +11,23 @@
     tools:context=".MainActivity">
 
     <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:weightSum="1">
+
+        <TextView
+            android:id="@+id/textMinPercentTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentRight="false"
+            android:layout_alignParentStart="true"
+            android:layout_alignParentTop="true"
+            android:text="@string/minPercentTitle" />
+    </RelativeLayout>
+
+    <RelativeLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content">
 
@@ -31,7 +48,6 @@
             android:layout_alignParentRight="true"
             android:gravity="center_vertical|center_horizontal"
             android:text="@string/percent_value" />
-
 
     </RelativeLayout>
 

@@ -14,6 +14,7 @@
     <string name="hours">годин</string>
     <string name="minutes">хвилин</string>
     <string name="seconds">секунд</string>
-    <string name="auto_fix" >Оновлювати на розблокування за часом доби</string>
+    <string name="auto_fix">Оновлювати на розблокування за часом доби</string>
     <string name="percent_value">0%</string>
+    <string name="minPercentTitle">Мінімальна яскравість єкрану</string>
 </resources>
