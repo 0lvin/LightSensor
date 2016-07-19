@@ -312,10 +312,44 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 
         magnitude_seek.setMax(40);
         magnitude_seek.setProgress(lastMagnitudeValue);
+        magnitude_seek.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int position, boolean b) {
+                lastMagnitudeValue = position;
+                updateTextValues();
+            }
 
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
+            }
+        });
 
         percent_seek.setMax(60);
         percent_seek.setProgress(lastPercentValue);
+        percent_seek.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int position, boolean b) {
+                lastPercentValue = position;
+                savePreferences(-1);
+                updateTextValues();
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
+            }
+        });
 
         bar.setMax(256);
         bar.setProgress(this.lastBrightnessValue);

@@ -23,13 +23,14 @@ public class UnlockReceiver extends BroadcastReceiver {
             Log.i(EVENTS_NAME, "Service disabled.");
             return;
         }
+        float percentValue = prefs.getInt(MainActivity.PERCENT_VALUE, 0);
         try {
             Calendar curCalendar = Calendar.getInstance();
             Date curDate = curCalendar.getTime();
             int minutes = curDate.getHours() * 60 + curDate.getMinutes();
             double minDegree = minutes * 360 / 24 / 60 + 270;
             // 0 hour -> sin(270) -> -1
-            double value = Math.min(Math.sin(Math.toRadians(minDegree)) * 128 + 128, 256);
+            double value = Math.min(Math.sin(Math.toRadians(minDegree)) * 128 + 128 + (percentValue * 256 / 100), 256);
 
             Log.i(EVENTS_NAME, "Set brightness to " + Double.toString(value));
             Settings.System.putInt(context.getContentResolver(), Settings.System.SCREEN_BRIGHTNESS, (int) value);
