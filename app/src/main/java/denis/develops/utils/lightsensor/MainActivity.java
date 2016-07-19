@@ -1,9 +1,9 @@
 package denis.develops.utils.lightsensor;
 
 import android.app.Activity;
-import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.ContentResolver;
+import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
@@ -36,12 +36,12 @@ import java.util.List;
 
 public class MainActivity extends Activity implements SurfaceHolder.Callback, Camera.PreviewCallback, Camera.AutoFocusCallback {
 
-    final String PREFERENCES_NAME = "preferences";
-    final String MAGNITUDE_VALUE = "MagnitudeValue";
-    final String PERCENT_VALUE = "PercentValue";
-    final String RUNTIME_VALUE = "LastRunTime";
-    final String EVENTS_NAME = "LightsSensors";
-    final String AUTO_VALUE = "AutoUpdateOnEvent";
+    final static String PREFERENCES_NAME = "preferences";
+    final static String MAGNITUDE_VALUE = "MagnitudeValue";
+    final static String PERCENT_VALUE = "PercentValue";
+    final static String RUNTIME_VALUE = "LastRunTime";
+    final static String EVENTS_NAME = "LightsSensors";
+    final static String AUTO_VALUE = "AutoUpdateOnEvent";
     private ContentResolver cResolver;
     private int lastBrightnessValue = 0;
     private int lastMagnitudeValue = 10;
@@ -64,7 +64,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
     private TextView textPercent;
     private Date startTime;
     private long lastTime;
-    private BroadcastReceiver mPowerKeyReceiver = null;
+    private boolean serviceEnabled = false;
 
     public static float getMiddleIntense(byte[] data, int width, int height) {
         long sum = 0;
@@ -76,17 +76,15 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
     }
 
     private void registerBroadcastReceiver() {
-        if (mPowerKeyReceiver != null)
-            return;
         try {
             Log.i(this.EVENTS_NAME, "Register unlock receiver.");
             final IntentFilter theFilter = new IntentFilter();
             /** System Defined Broadcast */
             theFilter.addAction(Intent.ACTION_SCREEN_ON);
             theFilter.addAction(Intent.ACTION_USER_PRESENT);
-            this.mPowerKeyReceiver = new UnlockReceiver();
+            UnlockReceiver mUnlockReceiver = new UnlockReceiver();
 
-            getApplicationContext().registerReceiver(this.mPowerKeyReceiver, theFilter);
+            getApplicationContext().registerReceiver(mUnlockReceiver, theFilter);
 
             // disable service on system level
             ComponentName receiver = new ComponentName(getApplicationContext(), UnlockReceiver.class);
@@ -97,29 +95,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
                     PackageManager.DONT_KILL_APP);
 
         } catch (Exception e) {
-            Log.e("Error", "Cannot access system brightness:" + e.toString());
-        }
-    }
-
-    private void unregisterReceiver() {
-        if (this.mPowerKeyReceiver == null)
-            return;
-        try {
-            Log.i(this.EVENTS_NAME, "Unregister unlock receiver.");
-
-            getApplicationContext().unregisterReceiver(mPowerKeyReceiver);
-
-            this.mPowerKeyReceiver = null;
-
-            // disable service on system level
-            ComponentName receiver = new ComponentName(getApplicationContext(), UnlockReceiver.class);
-            PackageManager pm = getApplicationContext().getPackageManager();
-
-            pm.setComponentEnabledSetting(receiver,
-                    PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
-                    PackageManager.DONT_KILL_APP);
-        } catch (Exception e) {
-            Log.e("Error", "Cannot access system brightness:" + e.toString());
+            Log.e("Error", "Cannot register unlock receiver:" + e.toString());
         }
     }
 
@@ -205,18 +181,25 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
         camera = null;
     }
 
+    private void savePreferences(long newTimeValue) {
+        SharedPreferences prefs = getSharedPreferences(this.PREFERENCES_NAME, Context.MODE_PRIVATE);
+        SharedPreferences.Editor edit = prefs.edit();
+        edit.putInt(this.MAGNITUDE_VALUE, this.lastMagnitudeValue);
+        if (newTimeValue > 0) {
+            edit.putLong(this.RUNTIME_VALUE, newTimeValue);
+        }
+        edit.putBoolean(this.AUTO_VALUE, serviceEnabled);
+        edit.putInt(this.PERCENT_VALUE, this.lastPercentValue);
+        edit.apply();
+    }
+
     @Override
     protected void onPause() {
         Date current = new Date();
         long newTimeValue = this.lastTime + (current.getTime() - this.startTime.getTime()) / 1000;
         super.onPause();
         delete_camera();
-        SharedPreferences prefs = getSharedPreferences(this.PREFERENCES_NAME, MODE_PRIVATE);
-        SharedPreferences.Editor edit = prefs.edit();
-        edit.putInt(this.MAGNITUDE_VALUE, this.lastMagnitudeValue);
-        edit.putLong(this.RUNTIME_VALUE, newTimeValue);
-        edit.putBoolean(this.AUTO_VALUE, mPowerKeyReceiver != null);
-        edit.apply();
+        this.savePreferences(newTimeValue);
     }
 
     private void updateTextValues() {
@@ -233,7 +216,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
         String cameraText = getString(R.string.camera_light);
         textCameraLight.setText(cameraText + Integer.toString((int) (SensorManager.LIGHT_OVERCAST * lastCameraSensorValue / 255)));
         textMagnitude.setText(Float.toString(getMagnitude()) + "x");
-        textPercent.setText(Integer.toString (lastPercentValue) + "%");
+        textPercent.setText(Integer.toString(lastPercentValue) + "%");
         String stateText = getString(R.string.license_text) + "\n";
         if (usedLightSensor) {
             stateText += getString(R.string.used_light_sensor) + "\n";
@@ -306,6 +289,8 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
         Switch registerSwitch = (Switch) findViewById(R.id.switchAuto);
         cResolver = getContentResolver();
 
+        registerBroadcastReceiver();
+
         this.initLightSensor();
         this.updateBrightnessBar();
         this.easterEggInit();
@@ -313,16 +298,17 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
         this.startTime = new Date();
         if (savedInstanceState != null) {
             lastMagnitudeValue = savedInstanceState.getInt(this.MAGNITUDE_VALUE, 10);
-            lastPercentValue = savedInstanceState.getInt(this.PERCENT_VALUE, 10);
+            lastPercentValue = savedInstanceState.getInt(this.PERCENT_VALUE, 0);
             this.lastTime = savedInstanceState.getLong(this.RUNTIME_VALUE, 0);
             registerSwitch.setChecked(savedInstanceState.getBoolean(this.AUTO_VALUE, false));
         } else {
             SharedPreferences prefs = getSharedPreferences(this.PREFERENCES_NAME, MODE_PRIVATE);
-            lastMagnitudeValue = prefs.getInt(this.MAGNITUDE_VALUE, 5);
-            lastPercentValue = prefs.getInt(this.PERCENT_VALUE, 5);
+            lastMagnitudeValue = prefs.getInt(this.MAGNITUDE_VALUE, 10);
+            lastPercentValue = prefs.getInt(this.PERCENT_VALUE, 0);
             this.lastTime = prefs.getLong(this.RUNTIME_VALUE, 0);
             registerSwitch.setChecked(prefs.getBoolean(this.AUTO_VALUE, false));
         }
+
 
         magnitude_seek.setMax(40);
         magnitude_seek.setProgress(lastMagnitudeValue);
@@ -341,18 +327,11 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
         registerSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
-                if (b) {
-                    registerBroadcastReceiver();
-                } else {
-                    unregisterReceiver();
-                }
+                serviceEnabled = b;
+                savePreferences(-1);
             }
         });
-        if (registerSwitch.isChecked()) {
-            registerBroadcastReceiver();
-        } else {
-            unregisterReceiver();
-        }
+        serviceEnabled = registerSwitch.isChecked();
     }
 
     private void updateBrightnessBar() {
@@ -374,7 +353,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
         outState.putInt(this.MAGNITUDE_VALUE, this.lastMagnitudeValue);
         outState.putInt(this.PERCENT_VALUE, this.lastPercentValue);
         outState.putLong(this.RUNTIME_VALUE, newTimeValue);
-        outState.putBoolean(this.AUTO_VALUE, mPowerKeyReceiver != null);
+        outState.putBoolean(this.AUTO_VALUE, serviceEnabled);
         super.onSaveInstanceState(outState);
     }
 
@@ -436,7 +415,8 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
     }
 
     private void updateBrightness() {
-        float cameraLightValue = lastCameraSensorValue * getMagnitude() + (lastPercentValue * 256 / 100);
+        float cameraLightValue = lastCameraSensorValue * getMagnitude()
+                + (lastPercentValue * 256 / 100);
         float sensorLightValue = lastLightSensorValue / SensorManager.LIGHT_OVERCAST * 256;
         if (!usedLightSensor) {
             // we don't have such sensor so use value from camera
