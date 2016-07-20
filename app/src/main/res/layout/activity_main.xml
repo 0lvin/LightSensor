@@ -139,6 +139,5 @@
         android:layout_gravity="center"
         android:layout_weight="0.54"
         android:adjustViewBounds="true"
-        android:background="#000000"
         android:contentDescription="@string/camera_preview" />
 </LinearLayout>
