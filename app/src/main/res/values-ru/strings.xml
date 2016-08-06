@@ -14,7 +14,8 @@
     <string name="hours">часов</string>
     <string name="minutes">минут</string>
     <string name="seconds">секунд</string>
-    <string name="auto_fix">Обновлять на расблокировку по времени суток</string>
+    <string name="auto_fix">Обновлять на разблокировку по времени суток</string>
     <string name="percent_value">0%</string>
     <string name="minPercentTitle">Минимальная подсветка</string>
+    <string name="settings">Настройки</string>
 </resources>

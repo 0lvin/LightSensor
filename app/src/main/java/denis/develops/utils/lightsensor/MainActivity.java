@@ -20,14 +20,15 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.provider.Settings.System;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup.LayoutParams;
-import android.widget.CompoundButton;
 import android.widget.ProgressBar;
 import android.widget.SeekBar;
-import android.widget.Switch;
 import android.widget.TextView;
 
 import java.io.IOException;
@@ -45,12 +46,11 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
     private ContentResolver cResolver;
     private int lastBrightnessValue = 0;
     private int lastMagnitudeValue = 10;
-    private int lastPercentValue = 0;
+    private int percentValueSettings = 0;
     private float lastLightSensorValue = 0;
     private float lastCameraSensorValue = 0;
     private ProgressBar bar;
     private SeekBar magnitude_seek;
-    private SeekBar percent_seek;
     private Camera camera = null;
     private SurfaceView preview;
     private SurfaceHolder surfaceHolder;
@@ -61,10 +61,8 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
     private boolean usedBack = false;
     private TextView textCameraLight;
     private TextView textMagnitude;
-    private TextView textPercent;
     private Date startTime;
     private long lastTime;
-    private boolean serviceEnabled = false;
 
     public static float getMiddleIntense(byte[] data, int width, int height) {
         long sum = 0;
@@ -167,6 +165,8 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
     @Override
     protected void onResume() {
         super.onResume();
+        SharedPreferences prefs = getSharedPreferences(this.PREFERENCES_NAME, MODE_PRIVATE);
+        percentValueSettings = prefs.getInt(this.PERCENT_VALUE, 0);
 
         this.init_camera();
     }
@@ -188,8 +188,6 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
         if (newTimeValue > 0) {
             edit.putLong(this.RUNTIME_VALUE, newTimeValue);
         }
-        edit.putBoolean(this.AUTO_VALUE, serviceEnabled);
-        edit.putInt(this.PERCENT_VALUE, this.lastPercentValue);
         edit.apply();
     }
 
@@ -200,6 +198,26 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
         super.onPause();
         delete_camera();
         this.savePreferences(newTimeValue);
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.setting_main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle item selection
+        switch (item.getItemId()) {
+            case R.id.settings:
+                Intent intent = new Intent(this, SettingsActivity.class);
+                this.startActivity(intent);
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
     }
 
     private void updateTextValues() {
@@ -216,7 +234,6 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
         String cameraText = getString(R.string.camera_light);
         textCameraLight.setText(cameraText + Integer.toString((int) (SensorManager.LIGHT_OVERCAST * lastCameraSensorValue / 255)));
         textMagnitude.setText(Float.toString(getMagnitude()) + "x");
-        textPercent.setText(Integer.toString(lastPercentValue) + "%");
         String stateText = getString(R.string.license_text) + "\n";
         if (usedLightSensor) {
             stateText += getString(R.string.used_light_sensor) + "\n";
@@ -277,16 +294,15 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
         setContentView(R.layout.activity_main);
 
         textMagnitude = (TextView) findViewById(R.id.textMagnitude);
-        textPercent = (TextView) findViewById(R.id.textPercent);
 
         textAuthor = (TextView) findViewById(R.id.textViewAuthor);
         textLightSensor = (TextView) findViewById(R.id.textLight);
         textCameraLight = (TextView) findViewById(R.id.textCameraLight);
         bar = (ProgressBar) findViewById(R.id.brightnessValue);
         magnitude_seek = (SeekBar) findViewById(R.id.magnitudeValue);
-        percent_seek = (SeekBar) findViewById(R.id.percentValue);
+
         preview = (SurfaceView) findViewById(R.id.imageView);
-        Switch registerSwitch = (Switch) findViewById(R.id.switchAuto);
+
         cResolver = getContentResolver();
 
         registerBroadcastReceiver();
@@ -298,15 +314,12 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
         this.startTime = new Date();
         if (savedInstanceState != null) {
             lastMagnitudeValue = savedInstanceState.getInt(this.MAGNITUDE_VALUE, 10);
-            lastPercentValue = savedInstanceState.getInt(this.PERCENT_VALUE, 0);
             this.lastTime = savedInstanceState.getLong(this.RUNTIME_VALUE, 0);
-            registerSwitch.setChecked(savedInstanceState.getBoolean(this.AUTO_VALUE, false));
         } else {
             SharedPreferences prefs = getSharedPreferences(this.PREFERENCES_NAME, MODE_PRIVATE);
+            percentValueSettings = prefs.getInt(this.PERCENT_VALUE, 0);
             lastMagnitudeValue = prefs.getInt(this.MAGNITUDE_VALUE, 10);
-            lastPercentValue = prefs.getInt(this.PERCENT_VALUE, 0);
             this.lastTime = prefs.getLong(this.RUNTIME_VALUE, 0);
-            registerSwitch.setChecked(prefs.getBoolean(this.AUTO_VALUE, false));
         }
 
 
@@ -330,27 +343,6 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
             }
         });
 
-        percent_seek.setMax(60);
-        percent_seek.setProgress(lastPercentValue);
-        percent_seek.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int position, boolean b) {
-                lastPercentValue = position;
-                savePreferences(-1);
-                updateTextValues();
-            }
-
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {
-
-            }
-
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {
-
-            }
-        });
-
         bar.setMax(256);
         bar.setProgress(this.lastBrightnessValue);
 
@@ -358,14 +350,6 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
         surfaceHolder.addCallback(this);
         this.updateTextValues();
 
-        registerSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
-                serviceEnabled = b;
-                savePreferences(-1);
-            }
-        });
-        serviceEnabled = registerSwitch.isChecked();
     }
 
     private void updateBrightnessBar() {
@@ -385,9 +369,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
         long newTimeValue = this.lastTime + (current.getTime() - this.startTime.getTime()) / 1000;
         super.onSaveInstanceState(outState);
         outState.putInt(this.MAGNITUDE_VALUE, this.lastMagnitudeValue);
-        outState.putInt(this.PERCENT_VALUE, this.lastPercentValue);
         outState.putLong(this.RUNTIME_VALUE, newTimeValue);
-        outState.putBoolean(this.AUTO_VALUE, serviceEnabled);
         super.onSaveInstanceState(outState);
     }
 
@@ -450,7 +432,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 
     private void updateBrightness() {
         float cameraLightValue = lastCameraSensorValue * getMagnitude()
-                + (lastPercentValue * 256 / 100);
+                + (percentValueSettings * 256 / 100);
         float sensorLightValue = lastLightSensorValue / SensorManager.LIGHT_OVERCAST * 256;
         if (!usedLightSensor) {
             // we don't have such sensor so use value from camera
@@ -477,7 +459,6 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
         Camera.Size size = params.getPreviewSize();
         lastCameraSensorValue = this.getMiddleIntense(data, size.width, size.height);
         lastMagnitudeValue = magnitude_seek.getProgress();
-        lastPercentValue = percent_seek.getProgress();
         this.updateBrightnessBar();
         this.updateTextValues();
         this.updateBrightness();

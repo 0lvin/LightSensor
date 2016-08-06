@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Датчык асвятлення</string>
+    <string name="camera_light">Камера:</string>
+    <string name="camera_preview">Препросмотр камеры</string>
+    <string name="license_text">Распрацавана Denis Pauk aka Olvin і Mitrand , 2015-2016 . Ліцэнзавана згодна GPL2 .</string>
+    <string name="magnitude_value">9.9x</string>
+    <string name="sensor_light">Сэнсар:</string>
+    <string name="sensor_not_exist">няма</string>
+    <string name="used_back_camera">Выкарыстоўваецца задняя камера</string>
+    <string name="used_front_camera">Выкарыстоўваецца франтальная камера</string>
+    <string name="used_light_sensor">Выкарыстоўваецца сэнсар асвятлення</string>
+    <string name="have_used_for">Выкарыстоўвалася</string>
+    <string name="hours">гадзін</string>
+    <string name="minutes">хвілін</string>
+    <string name="seconds">секунд</string>
+    <string name="auto_fix">Абнаўляць на расблокировку па часе сутак</string>
+    <string name="percent_value">0%</string>
+    <string name="minPercentTitle">Мінімальная падсвятленне</string>
+    <string name="settings">Налады</string>
+</resources>
