@@ -17,7 +17,9 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.provider.Settings.System;
 import android.util.Log;
 import android.view.Menu;
@@ -121,7 +123,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
         return sizes.get(0);
     }
 
-    private int getFrontCameraId(CameraInfo info){
+    private int getFrontCameraId(CameraInfo info) {
         //search front camera
         for (int i = 0; i < Camera.getNumberOfCameras(); i++) {
             Camera.getCameraInfo(i, info);
@@ -133,7 +135,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
         return -1;
     }
 
-    private int getBackCameraId(CameraInfo info){
+    private int getBackCameraId(CameraInfo info) {
         for (int i = 0; i < Camera.getNumberOfCameras(); i++) {
             Camera.getCameraInfo(i, info);
             if (info.facing == CameraInfo.CAMERA_FACING_BACK) {
@@ -193,6 +195,17 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
         SharedPreferences prefs = getSharedPreferences(this.PREFERENCES_NAME, MODE_PRIVATE);
         percentValueSettings = prefs.getInt(this.PERCENT_VALUE, 0);
         cannotChangeBrightness = prefs.getBoolean(this.DISABLE_CHANGE_BRIGHTNESS, false);
+        if (!cannotChangeBrightness) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                if (!Settings.System.canWrite(this)) {
+                    // Sorry we does have rights for it
+                    cannotChangeBrightness = true;
+                    Intent intent = new Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS);
+                    intent.setData(Uri.parse("package:" + this.getPackageName()));
+                    startActivity(intent);
+                }
+            }
+        }
         useBack = prefs.getBoolean(this.USE_BACK_CAMERA, false);
         this.init_camera();
     }
@@ -246,7 +259,14 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
         }
     }
 
+    private long lastUpdate = 0;
+
     private void updateTextValues() {
+        Date current = new Date();
+        long newTime = current.getTime()/1000;
+        if (lastUpdate == newTime)
+            return;
+        lastUpdate = newTime;
         Long usedSeconds = this.lastTime % 60;
         Long usedMinutes = (this.lastTime / 60) % 60;
         Long usedHours = (this.lastTime / 3600);
@@ -334,7 +354,6 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
         registerBroadcastReceiver();
 
         this.initLightSensor();
-        this.updateBrightnessBar();
         this.easterEggInit();
 
         this.startTime = new Date();
@@ -375,17 +394,6 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
         surfaceHolder.addCallback(this);
         this.updateTextValues();
 
-    }
-
-    private void updateBrightnessBar() {
-        try {
-            //Get the current system brightness
-            lastBrightnessValue = System.getInt(cResolver, System.SCREEN_BRIGHTNESS);
-        } catch (Exception e) {
-            //Throw an error case it couldn't be retrieved
-            Log.e("Error", "Cannot access system brightness:" + e.toString());
-        }
-        bar.setProgress(lastBrightnessValue);
     }
 
     @Override
@@ -470,12 +478,19 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
             newBrightness = 255;
         }
 
+        this.updateTextValues();
+
         // check difference, but don't do any changes if values similar
         if (Math.abs(cameraLightValue - newBrightness) > 5) {
             lastBrightnessValue = newBrightness;
             bar.setProgress(lastBrightnessValue);
             if (!cannotChangeBrightness) {
-                System.putInt(getContentResolver(), System.SCREEN_BRIGHTNESS, lastBrightnessValue);
+                try {
+                    System.putInt(getContentResolver(), System.SCREEN_BRIGHTNESS, lastBrightnessValue);
+                } catch (Exception e) {
+                    //Throw an error case it couldn't be retrieved
+                    Log.e("Error", "Cannot access system brightness:" + e.toString());
+                }
             }
         }
     }
@@ -485,9 +500,6 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
         Camera.Parameters params = camera.getParameters();
         Camera.Size size = params.getPreviewSize();
         lastCameraSensorValue = this.getMiddleIntense(data, size.width, size.height);
-        lastMagnitudeValue = magnitude_seek.getProgress();
-        this.updateBrightnessBar();
-        this.updateTextValues();
         this.updateBrightness();
     }
 }

@@ -8,7 +8,7 @@
     <string name="sensor_light">Сенсор:</string>
     <string name="sensor_not_exist">Нет</string>
     <string name="used_back_camera">Используется задняя камера </string>
-    <string name="used_front_camera">Используется Фронтальная камера </string>
+    <string name="used_front_camera">Используется фронтальная камера</string>
     <string name="used_light_sensor">Используется сенсор освещения </string>
     <string name="have_used_for">Использовалось</string>
     <string name="hours">часов</string>
@@ -18,4 +18,6 @@
     <string name="percent_value">0%</string>
     <string name="minPercentTitle">Минимальная подсветка</string>
     <string name="settings">Настройки</string>
+    <string name="use_back_camera">Использовать заднюю камеру</string>
+    <string name="disable_change_brightness">Не изменять подсветку</string>
 </resources>
