@@ -43,6 +43,8 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
     final static String RUNTIME_VALUE = "LastRunTime";
     final static String EVENTS_NAME = "LightsSensors";
     final static String AUTO_VALUE = "AutoUpdateOnEvent";
+    final static String DISABLE_CHANGE_BRIGHTNESS = "DisableChangeBrightness";
+    final static String USE_BACK_CAMERA = "UseBackCamera";
     private ContentResolver cResolver;
     private int lastBrightnessValue = 0;
     private int lastMagnitudeValue = 10;
@@ -59,6 +61,8 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
     private boolean usedFront = false;
     private boolean usedLightSensor = false;
     private boolean usedBack = false;
+    private boolean useBack = false;
+    private boolean cannotChangeBrightness = false;
     private TextView textCameraLight;
     private TextView textMagnitude;
     private Date startTime;
@@ -117,11 +121,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
         return sizes.get(0);
     }
 
-    /*
-        returned camera, front camera preferred
-     */
-    private int getCameraId() {
-        CameraInfo info = new CameraInfo();
+    private int getFrontCameraId(CameraInfo info){
         //search front camera
         for (int i = 0; i < Camera.getNumberOfCameras(); i++) {
             Camera.getCameraInfo(i, info);
@@ -130,7 +130,10 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
                 return i;
             }
         }
-        // looks as front not exist
+        return -1;
+    }
+
+    private int getBackCameraId(CameraInfo info){
         for (int i = 0; i < Camera.getNumberOfCameras(); i++) {
             Camera.getCameraInfo(i, info);
             if (info.facing == CameraInfo.CAMERA_FACING_BACK) {
@@ -139,6 +142,28 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
             }
         }
         return -1;
+    }
+
+    /*
+        returned camera, front camera preferred
+     */
+    private int getCameraId() {
+        CameraInfo info = new CameraInfo();
+        int camera_id = -1;
+        if (!useBack) {
+            camera_id = this.getFrontCameraId(info);
+        } else {
+            camera_id = this.getBackCameraId(info);
+        }
+        if (camera_id > -1) {
+            return camera_id;
+        }
+        // looks as does not exist
+        if (!useBack) {
+            return this.getBackCameraId(info);
+        } else {
+            return this.getFrontCameraId(info);
+        }
     }
 
     protected void init_camera() {
@@ -167,7 +192,8 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
         super.onResume();
         SharedPreferences prefs = getSharedPreferences(this.PREFERENCES_NAME, MODE_PRIVATE);
         percentValueSettings = prefs.getInt(this.PERCENT_VALUE, 0);
-
+        cannotChangeBrightness = prefs.getBoolean(this.DISABLE_CHANGE_BRIGHTNESS, false);
+        useBack = prefs.getBoolean(this.USE_BACK_CAMERA, false);
         this.init_camera();
     }
 
@@ -322,7 +348,6 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
             this.lastTime = prefs.getLong(this.RUNTIME_VALUE, 0);
         }
 
-
         magnitude_seek.setMax(40);
         magnitude_seek.setProgress(lastMagnitudeValue);
         magnitude_seek.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
@@ -449,7 +474,9 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
         if (Math.abs(cameraLightValue - newBrightness) > 5) {
             lastBrightnessValue = newBrightness;
             bar.setProgress(lastBrightnessValue);
-            System.putInt(getContentResolver(), System.SCREEN_BRIGHTNESS, lastBrightnessValue);
+            if (!cannotChangeBrightness) {
+                System.putInt(getContentResolver(), System.SCREEN_BRIGHTNESS, lastBrightnessValue);
+            }
         }
     }
 
