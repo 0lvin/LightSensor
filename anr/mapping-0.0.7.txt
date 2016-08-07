@@ -1,0 +1,110 @@
+denis.develops.utils.lightsensor.MainActivity -> denis.develops.utils.lightsensor.MainActivity:
+    android.content.ContentResolver cResolver -> a
+    int lastBrightnessValue -> b
+    int lastMagnitudeValue -> c
+    int percentValueSettings -> d
+    float lastLightSensorValue -> e
+    float lastCameraSensorValue -> f
+    android.widget.ProgressBar bar -> g
+    android.widget.SeekBar magnitude_seek -> h
+    android.hardware.Camera camera -> i
+    android.view.SurfaceView preview -> j
+    android.view.SurfaceHolder surfaceHolder -> k
+    android.widget.TextView textAuthor -> l
+    android.widget.TextView textLightSensor -> m
+    boolean usedFront -> n
+    boolean usedLightSensor -> o
+    boolean usedBack -> p
+    boolean useBack -> q
+    boolean cannotChangeBrightness -> r
+    android.widget.TextView textCameraLight -> s
+    android.widget.TextView textMagnitude -> t
+    java.util.Date startTime -> u
+    long lastTime -> v
+    long lastUpdate -> w
+    void <init>() -> <init>
+    float getMiddleIntense(byte[],int,int) -> a
+    void registerBroadcastReceiver() -> c
+    android.hardware.Camera$Size getMinimalPreviewSize(android.hardware.Camera$Parameters) -> a
+    int getFrontCameraId(android.hardware.Camera$CameraInfo) -> a
+    int getBackCameraId(android.hardware.Camera$CameraInfo) -> b
+    int getCameraId() -> d
+    void init_camera() -> a
+    void onResume() -> onResume
+    void delete_camera() -> b
+    void savePreferences(long) -> a
+    void onPause() -> onPause
+    boolean onCreateOptionsMenu(android.view.Menu) -> onCreateOptionsMenu
+    boolean onOptionsItemSelected(android.view.MenuItem) -> onOptionsItemSelected
+    void updateTextValues() -> e
+    void initLightSensor() -> f
+    void easterEggInit() -> g
+    void onCreate(android.os.Bundle) -> onCreate
+    void onSaveInstanceState(android.os.Bundle) -> onSaveInstanceState
+    void onAutoFocus(boolean,android.hardware.Camera) -> onAutoFocus
+    void surfaceCreated(android.view.SurfaceHolder) -> surfaceCreated
+    void surfaceChanged(android.view.SurfaceHolder,int,int,int) -> surfaceChanged
+    void surfaceDestroyed(android.view.SurfaceHolder) -> surfaceDestroyed
+    float getMagnitude() -> h
+    void updateBrightness() -> i
+    void onPreviewFrame(byte[],android.hardware.Camera) -> onPreviewFrame
+    float access$002(denis.develops.utils.lightsensor.MainActivity,float) -> a
+    void access$100(denis.develops.utils.lightsensor.MainActivity) -> a
+    int access$202(denis.develops.utils.lightsensor.MainActivity,int) -> a
+denis.develops.utils.lightsensor.MainActivity$1 -> denis.develops.utils.lightsensor.a:
+    denis.develops.utils.lightsensor.MainActivity this$0 -> a
+    void <init>(denis.develops.utils.lightsensor.MainActivity) -> <init>
+    void onSensorChanged(android.hardware.SensorEvent) -> onSensorChanged
+    void onAccuracyChanged(android.hardware.Sensor,int) -> onAccuracyChanged
+denis.develops.utils.lightsensor.MainActivity$2 -> denis.develops.utils.lightsensor.b:
+    denis.develops.utils.lightsensor.MainActivity this$0 -> a
+    void <init>(denis.develops.utils.lightsensor.MainActivity) -> <init>
+    void onClick(android.view.View) -> onClick
+denis.develops.utils.lightsensor.MainActivity$3 -> denis.develops.utils.lightsensor.c:
+    denis.develops.utils.lightsensor.MainActivity this$0 -> a
+    void <init>(denis.develops.utils.lightsensor.MainActivity) -> <init>
+    void onProgressChanged(android.widget.SeekBar,int,boolean) -> onProgressChanged
+    void onStartTrackingTouch(android.widget.SeekBar) -> onStartTrackingTouch
+    void onStopTrackingTouch(android.widget.SeekBar) -> onStopTrackingTouch
+denis.develops.utils.lightsensor.SettingsActivity -> denis.develops.utils.lightsensor.SettingsActivity:
+    android.widget.TextView textPercent -> a
+    android.widget.Switch registerSwitch -> b
+    android.widget.Switch useBackCameraSwitch -> c
+    android.widget.Switch canntChangeBrightnessSwitch -> d
+    int lastPercentValue -> e
+    android.widget.SeekBar percent_seek -> f
+    boolean serviceEnabled -> g
+    boolean useBack -> h
+    boolean cannotChangeBrightness -> i
+    void <init>() -> <init>
+    void updateTextValues() -> a
+    void onCreate(android.os.Bundle) -> onCreate
+    void savePreferences() -> b
+    int access$002(denis.develops.utils.lightsensor.SettingsActivity,int) -> a
+    void access$100(denis.develops.utils.lightsensor.SettingsActivity) -> a
+    void access$200(denis.develops.utils.lightsensor.SettingsActivity) -> b
+    boolean access$302(denis.develops.utils.lightsensor.SettingsActivity,boolean) -> a
+    boolean access$402(denis.develops.utils.lightsensor.SettingsActivity,boolean) -> b
+    boolean access$502(denis.develops.utils.lightsensor.SettingsActivity,boolean) -> c
+denis.develops.utils.lightsensor.SettingsActivity$1 -> denis.develops.utils.lightsensor.d:
+    denis.develops.utils.lightsensor.SettingsActivity this$0 -> a
+    void <init>(denis.develops.utils.lightsensor.SettingsActivity) -> <init>
+    void onProgressChanged(android.widget.SeekBar,int,boolean) -> onProgressChanged
+    void onStartTrackingTouch(android.widget.SeekBar) -> onStartTrackingTouch
+    void onStopTrackingTouch(android.widget.SeekBar) -> onStopTrackingTouch
+denis.develops.utils.lightsensor.SettingsActivity$2 -> denis.develops.utils.lightsensor.e:
+    denis.develops.utils.lightsensor.SettingsActivity this$0 -> a
+    void <init>(denis.develops.utils.lightsensor.SettingsActivity) -> <init>
+    void onCheckedChanged(android.widget.CompoundButton,boolean) -> onCheckedChanged
+denis.develops.utils.lightsensor.SettingsActivity$3 -> denis.develops.utils.lightsensor.f:
+    denis.develops.utils.lightsensor.SettingsActivity this$0 -> a
+    void <init>(denis.develops.utils.lightsensor.SettingsActivity) -> <init>
+    void onCheckedChanged(android.widget.CompoundButton,boolean) -> onCheckedChanged
+denis.develops.utils.lightsensor.SettingsActivity$4 -> denis.develops.utils.lightsensor.g:
+    denis.develops.utils.lightsensor.SettingsActivity this$0 -> a
+    void <init>(denis.develops.utils.lightsensor.SettingsActivity) -> <init>
+    void onCheckedChanged(android.widget.CompoundButton,boolean) -> onCheckedChanged
+denis.develops.utils.lightsensor.UnlockReceiver -> denis.develops.utils.lightsensor.UnlockReceiver:
+    java.lang.String EVENTS_NAME -> a
+    void <init>() -> <init>
+    void onReceive(android.content.Context,android.content.Intent) -> onReceive
