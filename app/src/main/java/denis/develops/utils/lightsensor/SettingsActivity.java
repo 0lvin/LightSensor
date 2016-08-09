@@ -14,10 +14,12 @@ public class SettingsActivity extends Activity {
     private Switch registerSwitch;
     private Switch useBackCameraSwitch;
     private Switch canntChangeBrightnessSwitch;
+    private Switch dontUseCameraSwitch;
     private int lastPercentValue = 0;
     private SeekBar percent_seek;
     private boolean serviceEnabled = false;
     private boolean useBack = false;
+    private boolean dontUseCamera = false;
     private boolean cannotChangeBrightness = false;
 
     private void updateTextValues() {
@@ -33,6 +35,7 @@ public class SettingsActivity extends Activity {
         registerSwitch = (Switch) findViewById(R.id.switchAuto);
         canntChangeBrightnessSwitch = (Switch) findViewById(R.id.disableChangeBrightness);
         useBackCameraSwitch = (Switch) findViewById(R.id.useBackCamera);
+        dontUseCameraSwitch = (Switch) findViewById(R.id.dontUseCamera);
 
         SharedPreferences prefs = getSharedPreferences(MainActivity.PREFERENCES_NAME, MODE_PRIVATE);
         lastPercentValue = prefs.getInt(MainActivity.PERCENT_VALUE, 0);
@@ -58,8 +61,8 @@ public class SettingsActivity extends Activity {
 
             }
         });
-        registerSwitch.setChecked(prefs.getBoolean(MainActivity.AUTO_VALUE, false));
 
+        registerSwitch.setChecked(prefs.getBoolean(MainActivity.AUTO_VALUE, false));
         registerSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
@@ -88,6 +91,16 @@ public class SettingsActivity extends Activity {
             }
         });
         cannotChangeBrightness = canntChangeBrightnessSwitch.isChecked();
+
+        dontUseCameraSwitch.setChecked(prefs.getBoolean(MainActivity.DISABLE_CAMERA, false));
+        dontUseCameraSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                dontUseCamera = b;
+                savePreferences();
+            }
+        });
+        dontUseCamera = dontUseCameraSwitch.isChecked();
     }
 
     private void savePreferences() {
@@ -97,6 +110,7 @@ public class SettingsActivity extends Activity {
         edit.putInt(MainActivity.PERCENT_VALUE, this.lastPercentValue);
         edit.putBoolean(MainActivity.DISABLE_CHANGE_BRIGHTNESS, cannotChangeBrightness);
         edit.putBoolean(MainActivity.USE_BACK_CAMERA, useBack);
+        edit.putBoolean(MainActivity.DISABLE_CAMERA, dontUseCamera);
         edit.apply();
     }
 }

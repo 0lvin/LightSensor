@@ -9,6 +9,7 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.graphics.Color;
 import android.graphics.ImageFormat;
 import android.hardware.Camera;
 import android.hardware.Camera.CameraInfo;
@@ -46,6 +47,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
     final static String EVENTS_NAME = "LightsSensors";
     final static String AUTO_VALUE = "AutoUpdateOnEvent";
     final static String DISABLE_CHANGE_BRIGHTNESS = "DisableChangeBrightness";
+    final static String DISABLE_CAMERA = "DisableCamera";
     final static String USE_BACK_CAMERA = "UseBackCamera";
     private ContentResolver cResolver;
     private int lastBrightnessValue = 0;
@@ -65,6 +67,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
     private boolean usedBack = false;
     private boolean useBack = false;
     private boolean cannotChangeBrightness = false;
+    private boolean dontUseCamera = false;
     private TextView textCameraLight;
     private TextView textMagnitude;
     private Date startTime;
@@ -152,6 +155,8 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
     private int getCameraId() {
         CameraInfo info = new CameraInfo();
         int camera_id = -1;
+        usedBack = false;
+        usedFront = false;
         if (!useBack) {
             camera_id = this.getFrontCameraId(info);
         } else {
@@ -185,6 +190,8 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
             Camera.Size previewSize = getMinimalPreviewSize(params);
             params.setPreviewSize(previewSize.width, previewSize.height);
             camera.setParameters(params);
+        } else {
+            dontUseCamera = true;
         }
 
     }
@@ -195,7 +202,8 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
         SharedPreferences prefs = getSharedPreferences(this.PREFERENCES_NAME, MODE_PRIVATE);
         percentValueSettings = prefs.getInt(this.PERCENT_VALUE, 0);
         cannotChangeBrightness = prefs.getBoolean(this.DISABLE_CHANGE_BRIGHTNESS, false);
-        if (!cannotChangeBrightness) {
+        dontUseCamera = prefs.getBoolean(this.DISABLE_CAMERA, false);
+        if (!cannotChangeBrightness || !dontUseCamera) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 if (!Settings.System.canWrite(this)) {
                     // Sorry we does have rights for it
@@ -204,10 +212,16 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
                     intent.setData(Uri.parse("package:" + this.getPackageName()));
                     startActivity(intent);
                 }
+                // temporary disable camera usage
+                dontUseCamera = true;
             }
         }
         useBack = prefs.getBoolean(this.USE_BACK_CAMERA, false);
-        this.init_camera();
+        if (!dontUseCamera) {
+            this.init_camera();
+        }
+        lastCameraSensorValue = 0;
+        lastLightSensorValue = 0;
     }
 
     protected void delete_camera() {
@@ -263,7 +277,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 
     private void updateTextValues() {
         Date current = new Date();
-        long newTime = current.getTime()/1000;
+        long newTime = current.getTime() / 1000;
         if (lastUpdate == newTime)
             return;
         lastUpdate = newTime;
@@ -311,6 +325,10 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
                 public void onSensorChanged(SensorEvent event) {
                     lastLightSensorValue = event.values[0];
                     updateTextValues();
+                    if (dontUseCamera) {
+                        int iColor = (int) (lastLightSensorValue / SensorManager.LIGHT_OVERCAST * 256);
+                        preview.setBackgroundColor(Color.argb(0, iColor, iColor, iColor));
+                    }
                 }
 
                 @Override

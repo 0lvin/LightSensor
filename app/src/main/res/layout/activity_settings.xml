@@ -73,4 +73,11 @@
         android:checked="false"
         android:text="@string/disable_change_brightness" />
 
+    <Switch
+        android:id="@+id/dontUseCamera"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:checked="false"
+        android:text="@string/dont_use_camera" />
+
 </LinearLayout>
