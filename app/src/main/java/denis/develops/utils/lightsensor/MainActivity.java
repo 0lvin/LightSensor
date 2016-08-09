@@ -49,6 +49,8 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
     final static String DISABLE_CHANGE_BRIGHTNESS = "DisableChangeBrightness";
     final static String DISABLE_CAMERA = "DisableCamera";
     final static String USE_BACK_CAMERA = "UseBackCamera";
+    final static int IWANTCAMERA = 1;
+    final static int IWANTCHANGESETTINGS = 2;
     private ContentResolver cResolver;
     private int lastBrightnessValue = 0;
     private int lastMagnitudeValue = 10;
@@ -205,15 +207,16 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
         dontUseCamera = prefs.getBoolean(this.DISABLE_CAMERA, false);
         if (!cannotChangeBrightness || !dontUseCamera) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                if (!Settings.System.canWrite(this)) {
-                    // Sorry we does have rights for it
-                    cannotChangeBrightness = true;
-                    Intent intent = new Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS);
-                    intent.setData(Uri.parse("package:" + this.getPackageName()));
-                    startActivity(intent);
+                if (checkSelfPermission(android.Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+                    // temporary disable camera usage
+                    dontUseCamera = true;
+                    requestPermissions(new String[]{android.Manifest.permission.CAMERA}, IWANTCAMERA);
                 }
-                // temporary disable camera usage
-                dontUseCamera = true;
+                if (checkSelfPermission(android.Manifest.permission.WRITE_SETTINGS) != PackageManager.PERMISSION_GRANTED || !Settings.System.canWrite(this)) {
+                    // temporary disable camera usage
+                    cannotChangeBrightness = true;
+                    requestPermissions(new String[]{android.Manifest.permission.WRITE_SETTINGS}, IWANTCHANGESETTINGS);
+                }
             }
         }
         useBack = prefs.getBoolean(this.USE_BACK_CAMERA, false);
@@ -222,6 +225,41 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
         }
         lastCameraSensorValue = 0;
         lastLightSensorValue = 0;
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           String permissions[], int[] grantResults) {
+        switch (requestCode) {
+            case IWANTCAMERA: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    dontUseCamera = false;
+
+                } else {
+                    SharedPreferences prefs = getSharedPreferences(MainActivity.PREFERENCES_NAME, Context.MODE_PRIVATE);
+                    SharedPreferences.Editor edit = prefs.edit();
+                    edit.putBoolean(MainActivity.DISABLE_CAMERA, true);
+                    edit.apply();
+                }
+                break;
+            }
+            case IWANTCHANGESETTINGS: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    cannotChangeBrightness = false;
+
+                } else {
+                    SharedPreferences prefs = getSharedPreferences(MainActivity.PREFERENCES_NAME, Context.MODE_PRIVATE);
+                    SharedPreferences.Editor edit = prefs.edit();
+                    edit.putBoolean(MainActivity.DISABLE_CHANGE_BRIGHTNESS, true);
+                    edit.apply();
+                }
+                break;
+            }
+        }
     }
 
     protected void delete_camera() {
