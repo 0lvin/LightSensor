@@ -20,4 +20,5 @@
     <string name="settings">Настройки</string>
     <string name="use_back_camera">Использовать заднюю камеру</string>
     <string name="disable_change_brightness">Не изменять подсветку</string>
+    <string name="dont_use_camera">Не использовать камеру.</string>
 </resources>
