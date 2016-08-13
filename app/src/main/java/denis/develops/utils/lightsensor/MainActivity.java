@@ -51,6 +51,9 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
     final static String USE_BACK_CAMERA = "UseBackCamera";
     final static int IWANTCAMERA = 1;
     final static int IWANTCHANGESETTINGS = 2;
+    Camera.Size cameraPreviewSize = null;
+    private SensorEventListener lightsSensorListener = null;
+    private SensorManager sensorManager = null;
     private ContentResolver cResolver;
     private int lastBrightnessValue = 0;
     private int lastMagnitudeValue = 10;
@@ -60,7 +63,6 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
     private ProgressBar bar;
     private SeekBar magnitude_seek;
     private Camera camera = null;
-    Camera.Size cameraPreviewSize = null;
     private SurfaceView preview;
     private SurfaceHolder surfaceHolder;
     private TextView textAuthor;
@@ -75,6 +77,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
     private TextView textMagnitude;
     private Date startTime;
     private long lastTime;
+    private long lastUpdate = 0;
 
     public static float getMiddleIntense(byte[] data, int width, int height) {
         long sum = 0;
@@ -294,6 +297,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
         }
         lastCameraSensorValue = 0;
         lastLightSensorValue = 0;
+        this.initLightSensor();
     }
 
     @Override
@@ -317,7 +321,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
             case IWANTCHANGESETTINGS: {
                 // If request is cancelled, the result arrays are empty.
                 if (grantResults.length > 0
-                        && grantResults[0] == PackageManager.PERMISSION_GRANTED ) {
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     cannotChangeBrightness = false;
 
                 } else {
@@ -362,6 +366,11 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
         long newTimeValue = this.lastTime + (current.getTime() - this.startTime.getTime()) / 1000;
         super.onPause();
         delete_camera();
+        if (lightsSensorListener != null && sensorManager != null) {
+            sensorManager.unregisterListener(lightsSensorListener);
+        }
+        lightsSensorListener = null;
+        sensorManager = null;
         this.savePreferences(newTimeValue);
     }
 
@@ -385,9 +394,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
         }
     }
 
-    private long lastUpdate = 0;
-
-    private void updateTextValues() {
+    private void updateShowedValues() {
         Date current = new Date();
         long newTime = current.getTime() / 1000;
         if (lastUpdate == newTime)
@@ -421,36 +428,35 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
         stateText += Long.toString(usedMinutes) + " " + getString(R.string.minutes) + " ";
         stateText += Long.toString(usedSeconds) + " " + getString(R.string.seconds) + ".\n";
         textAuthor.setText(stateText);
+        if (dontUseCamera) {
+            int iColor = (int) (lastLightSensorValue / SensorManager.LIGHT_OVERCAST * 256);
+            preview.setBackgroundColor(Color.argb(0, iColor, iColor, iColor));
+        }
+
+        bar.setProgress(lastBrightnessValue);
+        if (!cannotChangeBrightness) {
+            try {
+                System.putInt(getContentResolver(), System.SCREEN_BRIGHTNESS, lastBrightnessValue);
+            } catch (Exception e) {
+                //Throw an error case it couldn't be retrieved
+                Log.e("Error", "Cannot access system brightness:" + e.toString());
+            }
+        }
     }
 
     private void initLightSensor() {
         // Obtain references to the SensorManager and the Light Sensor
-        final SensorManager sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
+        sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         List<Sensor> sensors = sensorManager.getSensorList(Sensor.TYPE_LIGHT);
         if (sensors.size() > 0) {
             usedLightSensor = true;
             final Sensor lightSensor = sensorManager.getDefaultSensor(Sensor.TYPE_LIGHT);
 
-            // Implement a listener to receive updates
-            SensorEventListener listener = new SensorEventListener() {
-                @Override
-                public void onSensorChanged(SensorEvent event) {
-                    lastLightSensorValue = event.values[0];
-                    updateTextValues();
-                    if (dontUseCamera) {
-                        int iColor = (int) (lastLightSensorValue / SensorManager.LIGHT_OVERCAST * 256);
-                        preview.setBackgroundColor(Color.argb(0, iColor, iColor, iColor));
-                    }
-                }
+            if (lightsSensorListener != null && sensorManager != null) {
+                sensorManager.registerListener(
+                        lightsSensorListener, lightSensor, SensorManager.SENSOR_DELAY_NORMAL);
+            }
 
-                @Override
-                public void onAccuracyChanged(Sensor sensor, int accuracy) {
-
-                }
-            };
-
-            sensorManager.registerListener(
-                    listener, lightSensor, SensorManager.SENSOR_DELAY_NORMAL);
         }
     }
 
@@ -483,7 +489,6 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 
         registerBroadcastReceiver();
 
-        this.initLightSensor();
         this.easterEggInit();
 
         this.startTime = new Date();
@@ -503,7 +508,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
             @Override
             public void onProgressChanged(SeekBar seekBar, int position, boolean b) {
                 lastMagnitudeValue = position;
-                updateTextValues();
+                updateShowedValues();
             }
 
             @Override
@@ -522,7 +527,21 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 
         surfaceHolder = preview.getHolder();
         surfaceHolder.addCallback(this);
-        this.updateTextValues();
+        this.updateShowedValues();
+
+        // Implement a listener to receive updates
+        lightsSensorListener = new SensorEventListener() {
+            @Override
+            public void onSensorChanged(SensorEvent event) {
+                lastLightSensorValue = event.values[0];
+                updateShowedValues();
+            }
+
+            @Override
+            public void onAccuracyChanged(Sensor sensor, int accuracy) {
+
+            }
+        };
 
     }
 
@@ -608,21 +627,12 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
             newBrightness = 255;
         }
 
-        this.updateTextValues();
-
         // check difference, but don't do any changes if values similar
         if (Math.abs(cameraLightValue - newBrightness) > 5) {
             lastBrightnessValue = newBrightness;
-            bar.setProgress(lastBrightnessValue);
-            if (!cannotChangeBrightness) {
-                try {
-                    System.putInt(getContentResolver(), System.SCREEN_BRIGHTNESS, lastBrightnessValue);
-                } catch (Exception e) {
-                    //Throw an error case it couldn't be retrieved
-                    Log.e("Error", "Cannot access system brightness:" + e.toString());
-                }
-            }
         }
+
+        this.updateShowedValues();
     }
 
     @Override
