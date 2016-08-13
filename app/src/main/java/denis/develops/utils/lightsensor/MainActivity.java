@@ -21,7 +21,6 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
-import android.provider.Settings.System;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -110,6 +109,20 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
         } catch (Exception e) {
             Log.e("Error", "Cannot register unlock receiver:" + e.toString());
         }
+    }
+
+    private int[] getMinimalFps(Camera.Parameters params) {
+        List<int[]> fpsValue = params.getSupportedPreviewFpsRange ();
+
+        int minFps = 0;
+        int pos = 0;
+        for(int i =0; i < fpsValue.size(); i ++ ){
+            if (minFps > fpsValue.get(i)[1] || minFps == 0) {
+                minFps = fpsValue.get(i)[1];
+                pos = i;
+            }
+        }
+        return fpsValue.get(pos);
     }
 
     private String getMinimalIso(Camera.Parameters params) {
@@ -243,6 +256,10 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
                 } catch (Exception e) {
                     Log.e("Error", "Cannot set camera iso value:" + e.toString());
                 }
+            }
+            int[] fpsValue = getMinimalFps(params);
+            if (fpsValue != null) {
+                params.setPreviewFpsRange(fpsValue[0], fpsValue[1]);
             }
             if (params.isAutoExposureLockSupported()) {
                 params.setAutoExposureLock(true);
@@ -434,14 +451,6 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
         }
 
         bar.setProgress(lastBrightnessValue);
-        if (!cannotChangeBrightness) {
-            try {
-                System.putInt(getContentResolver(), System.SCREEN_BRIGHTNESS, lastBrightnessValue);
-            } catch (Exception e) {
-                //Throw an error case it couldn't be retrieved
-                Log.e("Error", "Cannot access system brightness:" + e.toString());
-            }
-        }
     }
 
     private void initLightSensor() {
@@ -535,6 +544,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
             public void onSensorChanged(SensorEvent event) {
                 lastLightSensorValue = event.values[0];
                 updateShowedValues();
+                updateBrightness();
             }
 
             @Override
@@ -631,13 +641,26 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
         if (Math.abs(cameraLightValue - newBrightness) > 5) {
             lastBrightnessValue = newBrightness;
         }
-
+        if (!cannotChangeBrightness) {
+            try {
+                Settings.System.putInt(getContentResolver(), Settings.System.SCREEN_BRIGHTNESS, lastBrightnessValue);
+            } catch (Exception e) {
+                //Throw an error case it couldn't be retrieved
+                Log.e("Error", "Cannot access system brightness:" + e.toString());
+            }
+        }
         this.updateShowedValues();
     }
+
+    long lastUpdateTimeMillisecondsStamp = 0;
 
     @Override
     public void onPreviewFrame(byte[] data, Camera camera) {
         try {
+            long currMillis = System.currentTimeMillis() / 256; // ~ 4fps
+            if (lastUpdateTimeMillisecondsStamp == currMillis)
+                return;
+            lastUpdateTimeMillisecondsStamp = currMillis;
             lastCameraSensorValue = this.getMiddleIntense(data, cameraPreviewSize.width, cameraPreviewSize.height);
             this.updateBrightness();
         } catch (Exception e) {
