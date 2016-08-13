@@ -60,6 +60,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
     private ProgressBar bar;
     private SeekBar magnitude_seek;
     private Camera camera = null;
+    Camera.Size cameraPreviewSize = null;
     private SurfaceView preview;
     private SurfaceHolder surfaceHolder;
     private TextView textAuthor;
@@ -106,6 +107,52 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
         } catch (Exception e) {
             Log.e("Error", "Cannot register unlock receiver:" + e.toString());
         }
+    }
+
+    private String getMinimalIso(Camera.Parameters params) {
+        String fullIsoListString = params.get("iso-values");
+        int minIso = 0;
+        String result = null;
+        if (fullIsoListString != null) {
+            String[] fullIsoList = fullIsoListString.split(",");
+            for (int i = 0; i < fullIsoList.length; i++) {
+                String isoString = fullIsoList[i];
+                int currValue = 0;
+                if (isoString == null)
+                    continue;
+                isoString = isoString.toLowerCase();
+                if (isoString.startsWith("iso")) {
+                    isoString = isoString.substring("iso".length());
+                }
+                // skip auto value
+                if ("auto".equals(isoString))
+                    continue;
+
+                // try convert to int
+                try {
+                    currValue = Integer.parseInt(isoString);
+                } catch (Exception e) {
+                    Log.e("Error", "Can convert int?:" + e.toString());
+                }
+                if (minIso == 0) {
+                    minIso = currValue;
+                    result = fullIsoList[i];
+                }
+
+                // compare with minimal
+                if (currValue != 0) {
+                    if (minIso > currValue) {
+                        minIso = currValue;
+                        result = fullIsoList[i];
+                    }
+                }
+            }
+        }
+        // if we found something
+        if (minIso > 0) {
+            return result;
+        }
+        return null;
     }
 
     private Camera.Size getMinimalPreviewSize(Camera.Parameters params) {
@@ -185,13 +232,25 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
             Camera.Parameters params = camera.getParameters();
             params.setColorEffect(Camera.Parameters.EFFECT_MONO);
             params.setPreviewFormat(ImageFormat.NV21);
+            String minimalIso = getMinimalIso(params);
+            if (minimalIso != null) {
+                try {
+                    params.set("iso", minimalIso);
+                    camera.setParameters(params);
+                } catch (Exception e) {
+                    Log.e("Error", "Cannot set camera iso value:" + e.toString());
+                }
+            }
             if (params.isAutoExposureLockSupported()) {
                 params.setAutoExposureLock(true);
                 params.setExposureCompensation(1);
             }
             Camera.Size previewSize = getMinimalPreviewSize(params);
-            params.setPreviewSize(previewSize.width, previewSize.height);
+            if (previewSize != null) {
+                params.setPreviewSize(previewSize.width, previewSize.height);
+            }
             camera.setParameters(params);
+            cameraPreviewSize = params.getPreviewSize();
         } else {
             dontUseCamera = true;
         }
@@ -207,15 +266,25 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
         dontUseCamera = prefs.getBoolean(this.DISABLE_CAMERA, false);
         if (!cannotChangeBrightness || !dontUseCamera) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                if (checkSelfPermission(android.Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-                    // temporary disable camera usage
-                    dontUseCamera = true;
-                    requestPermissions(new String[]{android.Manifest.permission.CAMERA}, IWANTCAMERA);
-                }
-                if (checkSelfPermission(android.Manifest.permission.WRITE_SETTINGS) != PackageManager.PERMISSION_GRANTED || !Settings.System.canWrite(this)) {
-                    // temporary disable camera usage
-                    cannotChangeBrightness = true;
-                    requestPermissions(new String[]{android.Manifest.permission.WRITE_SETTINGS}, IWANTCHANGESETTINGS);
+                if (!dontUseCamera)
+                    if (checkSelfPermission(android.Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+                        // temporary disable camera usage
+                        dontUseCamera = true;
+                        requestPermissions(new String[]{android.Manifest.permission.CAMERA}, IWANTCAMERA);
+                    }
+                if (!cannotChangeBrightness) {
+                    if (!Settings.System.canWrite(this)) {
+                        // temporary disable settings change
+                        cannotChangeBrightness = true;
+                        // add call back for check settings
+                        if (checkSelfPermission(android.Manifest.permission.WRITE_SETTINGS) != PackageManager.PERMISSION_GRANTED) {
+                            requestPermissions(new String[]{android.Manifest.permission.WRITE_SETTINGS}, IWANTCHANGESETTINGS);
+                        }
+                        // really ask about permission
+                        Intent intent = new Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS);
+                        intent.setData(Uri.parse("package:" + this.getPackageName()));
+                        startActivity(intent);
+                    }
                 }
             }
         }
@@ -248,14 +317,19 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
             case IWANTCHANGESETTINGS: {
                 // If request is cancelled, the result arrays are empty.
                 if (grantResults.length > 0
-                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED ) {
                     cannotChangeBrightness = false;
 
                 } else {
-                    SharedPreferences prefs = getSharedPreferences(MainActivity.PREFERENCES_NAME, Context.MODE_PRIVATE);
-                    SharedPreferences.Editor edit = prefs.edit();
-                    edit.putBoolean(MainActivity.DISABLE_CHANGE_BRIGHTNESS, true);
-                    edit.apply();
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && Settings.System.canWrite(this)) {
+                        // maybe i have rights?
+                        cannotChangeBrightness = false;
+                    } else {
+                        SharedPreferences prefs = getSharedPreferences(MainActivity.PREFERENCES_NAME, Context.MODE_PRIVATE);
+                        SharedPreferences.Editor edit = prefs.edit();
+                        edit.putBoolean(MainActivity.DISABLE_CHANGE_BRIGHTNESS, true);
+                        edit.apply();
+                    }
                 }
                 break;
             }
@@ -553,9 +627,13 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 
     @Override
     public void onPreviewFrame(byte[] data, Camera camera) {
-        Camera.Parameters params = camera.getParameters();
-        Camera.Size size = params.getPreviewSize();
-        lastCameraSensorValue = this.getMiddleIntense(data, size.width, size.height);
-        this.updateBrightness();
+        try {
+            lastCameraSensorValue = this.getMiddleIntense(data, cameraPreviewSize.width, cameraPreviewSize.height);
+            this.updateBrightness();
+        } catch (Exception e) {
+            Log.e("Error", "Issue with camera preview:" + e.toString());
+            Camera.Parameters params = camera.getParameters();
+            cameraPreviewSize = params.getPreviewSize();
+        }
     }
 }
