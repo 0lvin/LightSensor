@@ -78,13 +78,23 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
     private long lastTime;
     private long lastUpdate = 0;
 
-    public static float getMiddleIntense(byte[] data, int width, int height) {
+    /*
+      data - NV21 raw data from camera (width * height * 2),
+      width - preview width,
+      height - preview height,
+      pos - pos in step,
+      step - step for for
+     */
+    private static float getMiddleIntense(byte[] data, int width, int height, int pos, int step) {
+        if (step <= 0) {
+            step = 1;
+        }
         long sum = 0;
         int size = width * height;
-        for (int i = 0; i < size; i++) {
-            sum += data[i] & 0xFF;
+        for (int i = 0; i < size; i += step) {
+            sum += data[i + pos] & 0xFF;
         }
-        return sum / size;
+        return (sum * step) / size;
     }
 
     private void registerBroadcastReceiver() {
@@ -107,16 +117,16 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
                     PackageManager.DONT_KILL_APP);
 
         } catch (Exception e) {
-            Log.e("Error", "Cannot register unlock receiver:" + e.toString());
+            Log.e(this.EVENTS_NAME, "Cannot register unlock receiver:" + e.toString());
         }
     }
 
     private int[] getMinimalFps(Camera.Parameters params) {
-        List<int[]> fpsValue = params.getSupportedPreviewFpsRange ();
+        List<int[]> fpsValue = params.getSupportedPreviewFpsRange();
 
         int minFps = 0;
         int pos = 0;
-        for(int i =0; i < fpsValue.size(); i ++ ){
+        for (int i = 0; i < fpsValue.size(); i++) {
             if (minFps > fpsValue.get(i)[1] || minFps == 0) {
                 minFps = fpsValue.get(i)[1];
                 pos = i;
@@ -148,7 +158,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
                 try {
                     currValue = Integer.parseInt(isoString);
                 } catch (Exception e) {
-                    Log.e("Error", "Can convert int?:" + e.toString());
+                    Log.e(this.EVENTS_NAME, "Can not convert int?" + e.toString());
                 }
                 if (minIso == 0) {
                     minIso = currValue;
@@ -254,7 +264,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
                     params.set("iso", minimalIso);
                     camera.setParameters(params);
                 } catch (Exception e) {
-                    Log.e("Error", "Cannot set camera iso value:" + e.toString());
+                    Log.e(this.EVENTS_NAME, "Cannot set camera iso value:" + e.toString());
                 }
             }
             int[] fpsValue = getMinimalFps(params);
@@ -603,7 +613,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
                 preview.setLayoutParams(lp);
                 camera.startPreview();
             } catch (IOException e) {
-                Log.e("Error", "Cannot access system brightness:" + e.toString());
+                Log.e(this.EVENTS_NAME, "Cannot access system brightness:" + e.toString());
             }
         }
     }
@@ -646,10 +656,9 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
                 Settings.System.putInt(getContentResolver(), Settings.System.SCREEN_BRIGHTNESS, lastBrightnessValue);
             } catch (Exception e) {
                 //Throw an error case it couldn't be retrieved
-                Log.e("Error", "Cannot access system brightness:" + e.toString());
+                Log.e(this.EVENTS_NAME, "Cannot access system brightness:" + e.toString());
             }
         }
-        this.updateShowedValues();
     }
 
     long lastUpdateTimeMillisecondsStamp = 0;
@@ -661,10 +670,11 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
             if (lastUpdateTimeMillisecondsStamp == currMillis)
                 return;
             lastUpdateTimeMillisecondsStamp = currMillis;
-            lastCameraSensorValue = this.getMiddleIntense(data, cameraPreviewSize.width, cameraPreviewSize.height);
+            lastCameraSensorValue = this.getMiddleIntense(data, cameraPreviewSize.width, cameraPreviewSize.height, (int) (lastUpdateTimeMillisecondsStamp % 16), 16);
             this.updateBrightness();
+            this.updateShowedValues();
         } catch (Exception e) {
-            Log.e("Error", "Issue with camera preview:" + e.toString());
+            Log.e(this.EVENTS_NAME, "Issue with camera preview:" + e.toString());
             Camera.Parameters params = camera.getParameters();
             cameraPreviewSize = params.getPreviewSize();
         }
