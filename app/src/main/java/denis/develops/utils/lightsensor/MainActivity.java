@@ -21,7 +21,6 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
-import android.provider.Settings.System;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -51,6 +50,9 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
     final static String USE_BACK_CAMERA = "UseBackCamera";
     final static int IWANTCAMERA = 1;
     final static int IWANTCHANGESETTINGS = 2;
+    Camera.Size cameraPreviewSize = null;
+    private SensorEventListener lightsSensorListener = null;
+    private SensorManager sensorManager = null;
     private ContentResolver cResolver;
     private int lastBrightnessValue = 0;
     private int lastMagnitudeValue = 10;
@@ -74,14 +76,25 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
     private TextView textMagnitude;
     private Date startTime;
     private long lastTime;
+    private long lastUpdate = 0;
 
-    public static float getMiddleIntense(byte[] data, int width, int height) {
+    /*
+      data - NV21 raw data from camera (width * height * 2),
+      width - preview width,
+      height - preview height,
+      pos - pos in step,
+      step - step for for
+     */
+    private static float getMiddleIntense(byte[] data, int width, int height, int pos, int step) {
+        if (step <= 0) {
+            step = 1;
+        }
         long sum = 0;
         int size = width * height;
-        for (int i = 0; i < size; i++) {
-            sum += data[i] & 0xFF;
+        for (int i = 0; i < size; i += step) {
+            sum += data[i + pos] & 0xFF;
         }
-        return sum / size;
+        return (sum * step) / size;
     }
 
     private void registerBroadcastReceiver() {
@@ -104,8 +117,68 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
                     PackageManager.DONT_KILL_APP);
 
         } catch (Exception e) {
-            Log.e("Error", "Cannot register unlock receiver:" + e.toString());
+            Log.e(this.EVENTS_NAME, "Cannot register unlock receiver:" + e.toString());
         }
+    }
+
+    private int[] getMinimalFps(Camera.Parameters params) {
+        List<int[]> fpsValue = params.getSupportedPreviewFpsRange();
+
+        int minFps = 0;
+        int pos = 0;
+        for (int i = 0; i < fpsValue.size(); i++) {
+            if (minFps > fpsValue.get(i)[1] || minFps == 0) {
+                minFps = fpsValue.get(i)[1];
+                pos = i;
+            }
+        }
+        return fpsValue.get(pos);
+    }
+
+    private String getMinimalIso(Camera.Parameters params) {
+        String fullIsoListString = params.get("iso-values");
+        int minIso = 0;
+        String result = null;
+        if (fullIsoListString != null) {
+            String[] fullIsoList = fullIsoListString.split(",");
+            for (int i = 0; i < fullIsoList.length; i++) {
+                String isoString = fullIsoList[i];
+                int currValue = 0;
+                if (isoString == null)
+                    continue;
+                isoString = isoString.toLowerCase();
+                if (isoString.startsWith("iso")) {
+                    isoString = isoString.substring("iso".length());
+                }
+                // skip auto value
+                if ("auto".equals(isoString))
+                    continue;
+
+                // try convert to int
+                try {
+                    currValue = Integer.parseInt(isoString);
+                } catch (Exception e) {
+                    Log.e(this.EVENTS_NAME, "Can not convert int?" + e.toString());
+                }
+                if (minIso == 0) {
+                    minIso = currValue;
+                    result = fullIsoList[i];
+                }
+
+                // compare with minimal
+                if (currValue != 0) {
+                    if (minIso > currValue) {
+                        minIso = currValue;
+                        result = fullIsoList[i];
+                    }
+                }
+            }
+        }
+        // if we found something
+        if (minIso > 0) {
+            return result;
+        }
+        return null;
     }
 
     private Camera.Size getMinimalPreviewSize(Camera.Parameters params) {
@@ -185,13 +258,29 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
             Camera.Parameters params = camera.getParameters();
             params.setColorEffect(Camera.Parameters.EFFECT_MONO);
             params.setPreviewFormat(ImageFormat.NV21);
+            String minimalIso = getMinimalIso(params);
+            if (minimalIso != null) {
+                try {
+                    params.set("iso", minimalIso);
+                    camera.setParameters(params);
+                } catch (Exception e) {
+                    Log.e(this.EVENTS_NAME, "Cannot set camera iso value:" + e.toString());
+                }
+            }
+            int[] fpsValue = getMinimalFps(params);
+            if (fpsValue != null) {
+                params.setPreviewFpsRange(fpsValue[0], fpsValue[1]);
+            }
             if (params.isAutoExposureLockSupported()) {
                 params.setAutoExposureLock(true);
                 params.setExposureCompensation(1);
             }
             Camera.Size previewSize = getMinimalPreviewSize(params);
-            params.setPreviewSize(previewSize.width, previewSize.height);
+            if (previewSize != null) {
+                params.setPreviewSize(previewSize.width, previewSize.height);
+            }
             camera.setParameters(params);
+            cameraPreviewSize = params.getPreviewSize();
         } else {
             dontUseCamera = true;
         }
@@ -207,15 +296,25 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
         dontUseCamera = prefs.getBoolean(this.DISABLE_CAMERA, false);
         if (!cannotChangeBrightness || !dontUseCamera) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                if (checkSelfPermission(android.Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-                    // temporary disable camera usage
-                    dontUseCamera = true;
-                    requestPermissions(new String[]{android.Manifest.permission.CAMERA}, IWANTCAMERA);
-                }
-                if (checkSelfPermission(android.Manifest.permission.WRITE_SETTINGS) != PackageManager.PERMISSION_GRANTED || !Settings.System.canWrite(this)) {
-                    // temporary disable camera usage
-                    cannotChangeBrightness = true;
-                    requestPermissions(new String[]{android.Manifest.permission.WRITE_SETTINGS}, IWANTCHANGESETTINGS);
+                if (!dontUseCamera)
+                    if (checkSelfPermission(android.Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+                        // temporary disable camera usage
+                        dontUseCamera = true;
+                        requestPermissions(new String[]{android.Manifest.permission.CAMERA}, IWANTCAMERA);
+                    }
+                if (!cannotChangeBrightness) {
+                    if (!Settings.System.canWrite(this)) {
+                        // temporary disable settings change
+                        cannotChangeBrightness = true;
+                        // add call back for check settings
+                        if (checkSelfPermission(android.Manifest.permission.WRITE_SETTINGS) != PackageManager.PERMISSION_GRANTED) {
+                            requestPermissions(new String[]{android.Manifest.permission.WRITE_SETTINGS}, IWANTCHANGESETTINGS);
+                        }
+                        // really ask about permission
+                        Intent intent = new Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS);
+                        intent.setData(Uri.parse("package:" + this.getPackageName()));
+                        startActivity(intent);
+                    }
                 }
             }
         }
@@ -225,6 +324,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
         }
         lastCameraSensorValue = 0;
         lastLightSensorValue = 0;
+        this.initLightSensor();
     }
 
     @Override
@@ -252,10 +352,15 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
                     cannotChangeBrightness = false;
 
                 } else {
-                    SharedPreferences prefs = getSharedPreferences(MainActivity.PREFERENCES_NAME, Context.MODE_PRIVATE);
-                    SharedPreferences.Editor edit = prefs.edit();
-                    edit.putBoolean(MainActivity.DISABLE_CHANGE_BRIGHTNESS, true);
-                    edit.apply();
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && Settings.System.canWrite(this)) {
+                        // maybe i have rights?
+                        cannotChangeBrightness = false;
+                    } else {
+                        SharedPreferences prefs = getSharedPreferences(MainActivity.PREFERENCES_NAME, Context.MODE_PRIVATE);
+                        SharedPreferences.Editor edit = prefs.edit();
+                        edit.putBoolean(MainActivity.DISABLE_CHANGE_BRIGHTNESS, true);
+                        edit.apply();
+                    }
                 }
                 break;
             }
@@ -288,6 +393,11 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
         long newTimeValue = this.lastTime + (current.getTime() - this.startTime.getTime()) / 1000;
         super.onPause();
         delete_camera();
+        if (lightsSensorListener != null && sensorManager != null) {
+            sensorManager.unregisterListener(lightsSensorListener);
+        }
+        lightsSensorListener = null;
+        sensorManager = null;
         this.savePreferences(newTimeValue);
     }
 
@@ -311,9 +421,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
         }
     }
 
-    private long lastUpdate = 0;
-
-    private void updateTextValues() {
+    private void updateShowedValues() {
         Date current = new Date();
         long newTime = current.getTime() / 1000;
         if (lastUpdate == newTime)
@@ -347,36 +455,27 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
         stateText += Long.toString(usedMinutes) + " " + getString(R.string.minutes) + " ";
         stateText += Long.toString(usedSeconds) + " " + getString(R.string.seconds) + ".\n";
         textAuthor.setText(stateText);
+        if (dontUseCamera) {
+            int iColor = (int) (lastLightSensorValue / SensorManager.LIGHT_OVERCAST * 256);
+            preview.setBackgroundColor(Color.argb(0, iColor, iColor, iColor));
+        }
+
+        bar.setProgress(lastBrightnessValue);
     }
 
     private void initLightSensor() {
         // Obtain references to the SensorManager and the Light Sensor
-        final SensorManager sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
+        sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         List<Sensor> sensors = sensorManager.getSensorList(Sensor.TYPE_LIGHT);
         if (sensors.size() > 0) {
             usedLightSensor = true;
             final Sensor lightSensor = sensorManager.getDefaultSensor(Sensor.TYPE_LIGHT);
 
-            // Implement a listener to receive updates
-            SensorEventListener listener = new SensorEventListener() {
-                @Override
-                public void onSensorChanged(SensorEvent event) {
-                    lastLightSensorValue = event.values[0];
-                    updateTextValues();
-                    if (dontUseCamera) {
-                        int iColor = (int) (lastLightSensorValue / SensorManager.LIGHT_OVERCAST * 256);
-                        preview.setBackgroundColor(Color.argb(0, iColor, iColor, iColor));
-                    }
-                }
+            if (lightsSensorListener != null && sensorManager != null) {
+                sensorManager.registerListener(
+                        lightsSensorListener, lightSensor, SensorManager.SENSOR_DELAY_NORMAL);
+            }
 
-                @Override
-                public void onAccuracyChanged(Sensor sensor, int accuracy) {
-
-                }
-            };
-
-            sensorManager.registerListener(
-                    listener, lightSensor, SensorManager.SENSOR_DELAY_NORMAL);
         }
     }
 
@@ -409,7 +508,6 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 
         registerBroadcastReceiver();
 
-        this.initLightSensor();
         this.easterEggInit();
 
         this.startTime = new Date();
@@ -429,7 +527,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
             @Override
             public void onProgressChanged(SeekBar seekBar, int position, boolean b) {
                 lastMagnitudeValue = position;
-                updateTextValues();
+                updateShowedValues();
             }
 
             @Override
@@ -448,7 +546,22 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 
         surfaceHolder = preview.getHolder();
         surfaceHolder.addCallback(this);
-        this.updateTextValues();
+        this.updateShowedValues();
+
+        // Implement a listener to receive updates
+        lightsSensorListener = new SensorEventListener() {
+            @Override
+            public void onSensorChanged(SensorEvent event) {
+                lastLightSensorValue = event.values[0];
+                updateShowedValues();
+                updateBrightness();
+            }
+
+            @Override
+            public void onAccuracyChanged(Sensor sensor, int accuracy) {
+
+            }
+        };
 
     }
 
@@ -500,7 +613,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
                 preview.setLayoutParams(lp);
                 camera.startPreview();
             } catch (IOException e) {
-                Log.e("Error", "Cannot access system brightness:" + e.toString());
+                Log.e(this.EVENTS_NAME, "Cannot access system brightness:" + e.toString());
             }
         }
     }
@@ -534,28 +647,36 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
             newBrightness = 255;
         }
 
-        this.updateTextValues();
-
         // check difference, but don't do any changes if values similar
         if (Math.abs(cameraLightValue - newBrightness) > 5) {
             lastBrightnessValue = newBrightness;
-            bar.setProgress(lastBrightnessValue);
-            if (!cannotChangeBrightness) {
-                try {
-                    System.putInt(getContentResolver(), System.SCREEN_BRIGHTNESS, lastBrightnessValue);
-                } catch (Exception e) {
-                    //Throw an error case it couldn't be retrieved
-                    Log.e("Error", "Cannot access system brightness:" + e.toString());
-                }
+        }
+        if (!cannotChangeBrightness) {
+            try {
+                Settings.System.putInt(getContentResolver(), Settings.System.SCREEN_BRIGHTNESS, lastBrightnessValue);
+            } catch (Exception e) {
+                //Throw an error case it couldn't be retrieved
+                Log.e(this.EVENTS_NAME, "Cannot access system brightness:" + e.toString());
             }
         }
     }
 
+    long lastUpdateTimeMillisecondsStamp = 0;
+
     @Override
     public void onPreviewFrame(byte[] data, Camera camera) {
-        Camera.Parameters params = camera.getParameters();
-        Camera.Size size = params.getPreviewSize();
-        lastCameraSensorValue = this.getMiddleIntense(data, size.width, size.height);
-        this.updateBrightness();
+        try {
+            long currMillis = System.currentTimeMillis() / 256; // ~ 4fps
+            if (lastUpdateTimeMillisecondsStamp == currMillis)
+                return;
+            lastUpdateTimeMillisecondsStamp = currMillis;
+            lastCameraSensorValue = this.getMiddleIntense(data, cameraPreviewSize.width, cameraPreviewSize.height, (int) (lastUpdateTimeMillisecondsStamp % 16), 16);
+            this.updateBrightness();
+            this.updateShowedValues();
+        } catch (Exception e) {
+            Log.e(this.EVENTS_NAME, "Issue with camera preview:" + e.toString());
+            Camera.Parameters params = camera.getParameters();
+            cameraPreviewSize = params.getPreviewSize();
+        }
     }
 }
