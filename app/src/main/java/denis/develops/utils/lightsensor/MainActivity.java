@@ -17,6 +17,9 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -27,7 +30,6 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
-import android.view.View;
 import android.view.ViewGroup.LayoutParams;
 import android.widget.ProgressBar;
 import android.widget.SeekBar;
@@ -45,12 +47,19 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
     final static String RUNTIME_VALUE = "LastRunTime";
     final static String EVENTS_NAME = "LightsSensors";
     final static String AUTO_VALUE = "AutoUpdateOnEvent";
+    final static String AUTO_SUN_VALUE = "AutoUpdateOnEventSun";
     final static String DISABLE_CHANGE_BRIGHTNESS = "DisableChangeBrightness";
     final static String DISABLE_CAMERA = "DisableCamera";
     final static String USE_BACK_CAMERA = "UseBackCamera";
+    final static String ALTITUDE_VALUE = "AltitudeValue";
+    final static String LONGITUDE_VALUE = "LongitudeValue";
+    final static String LATITUDE_VALUE = "LatitudeValue";
     final static int IWANTCAMERA = 1;
     final static int IWANTCHANGESETTINGS = 2;
+    final static int IWANTLOCATION = 3;
+    private final static int PRECISE = 100000;
     Camera.Size cameraPreviewSize = null;
+    long lastUpdateTimeMillisecondsStamp = 0;
     private SensorEventListener lightsSensorListener = null;
     private SensorManager sensorManager = null;
     private ContentResolver cResolver;
@@ -70,6 +79,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
     private boolean usedLightSensor = false;
     private boolean usedBack = false;
     private boolean useBack = false;
+    private boolean useSunFix = false;
     private boolean cannotChangeBrightness = false;
     private boolean dontUseCamera = false;
     private TextView textCameraLight;
@@ -77,6 +87,12 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
     private Date startTime;
     private long lastTime;
     private long lastUpdate = 0;
+    // location
+    private LocationManager locationManager = null;
+    private LocationListener locationListener = null;
+    private float locationAltitude = 0;
+    private float locationLongitude = 0;
+    private float locationLatitude = 0;
 
     /*
       data - NV21 raw data from camera (width * height * 2),
@@ -158,7 +174,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
                 try {
                     currValue = Integer.parseInt(isoString);
                 } catch (Exception e) {
-                    Log.e(this.EVENTS_NAME, "Can not convert int?" + e.toString());
+                    Log.e(this.EVENTS_NAME, "Can not convert iso to int:" + e.toString());
                 }
                 if (minIso == 0) {
                     minIso = currValue;
@@ -248,7 +264,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
         }
     }
 
-    protected void init_camera() {
+    protected void initCamera() {
         if (camera != null)
             return;
 
@@ -287,6 +303,53 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 
     }
 
+    private void updateLocation(Location location) {
+        try {
+            locationAltitude = (float) Math.round(location.getAltitude() * PRECISE) / PRECISE;
+            locationLongitude = (float) Math.round(location.getLongitude() * PRECISE) / PRECISE;
+            locationLatitude = (float) Math.round(location.getLatitude() * PRECISE) / PRECISE;
+            Log.i(this.EVENTS_NAME, "Location: " + Float.toString(locationLatitude) + "/" + Float.toString(locationLongitude) + ":" + Float.toString(locationAltitude));
+        } catch (Exception e) {
+            Log.e(this.EVENTS_NAME, "Issue with location:" + e.toString());
+        }
+    }
+
+    private void initLocationSensor() {
+        if (locationManager != null)
+            return;
+
+        // init location receiver
+        // Acquire a reference to the system Location Manager
+        locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+
+        // Define a listener that responds to location updates
+        locationListener = new LocationListener() {
+            public void onLocationChanged(Location location) {
+                // Called when a new location is found by the network location provider.
+                updateLocation(location);
+            }
+
+            public void onStatusChanged(String provider, int status, Bundle extras) {
+            }
+
+            public void onProviderEnabled(String provider) {
+            }
+
+            public void onProviderDisabled(String provider) {
+            }
+        };
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (checkSelfPermission(android.Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                // Register the listener with the Location Manager to receive location updates
+                locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 10000, 100, locationListener);
+                Location lastKnownLocation = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+                updateLocation(lastKnownLocation);
+            }
+        }
+    }
+
+
     @Override
     protected void onResume() {
         super.onResume();
@@ -320,23 +383,52 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
         }
         useBack = prefs.getBoolean(this.USE_BACK_CAMERA, false);
         if (!dontUseCamera) {
-            this.init_camera();
+            this.initCamera();
         }
         lastCameraSensorValue = 0;
         lastLightSensorValue = 0;
         this.initLightSensor();
+
+        useSunFix = prefs.getBoolean(this.AUTO_SUN_VALUE, false);
+        if (useSunFix) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                if (checkSelfPermission(android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                    // temporary disable unlock sun update
+                    useSunFix = false;
+                    requestPermissions(new String[]{android.Manifest.permission.ACCESS_COARSE_LOCATION}, IWANTLOCATION);
+                }
+            }
+        }
+
+        if (useSunFix) {
+            initLocationSensor();
+        }
     }
 
     @Override
     public void onRequestPermissionsResult(int requestCode,
                                            String permissions[], int[] grantResults) {
         switch (requestCode) {
+            case IWANTLOCATION: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    useSunFix = true;
+                    initLocationSensor();
+                } else {
+                    SharedPreferences prefs = getSharedPreferences(MainActivity.PREFERENCES_NAME, Context.MODE_PRIVATE);
+                    SharedPreferences.Editor edit = prefs.edit();
+                    edit.putBoolean(MainActivity.AUTO_SUN_VALUE, false);
+                    edit.apply();
+                }
+                break;
+            }
             case IWANTCAMERA: {
                 // If request is cancelled, the result arrays are empty.
                 if (grantResults.length > 0
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     dontUseCamera = false;
-
+                    this.initCamera();
                 } else {
                     SharedPreferences prefs = getSharedPreferences(MainActivity.PREFERENCES_NAME, Context.MODE_PRIVATE);
                     SharedPreferences.Editor edit = prefs.edit();
@@ -367,7 +459,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
         }
     }
 
-    protected void delete_camera() {
+    protected void deleteCamera() {
         if (camera != null) {
             camera.setPreviewCallback(null);
             camera.stopPreview();
@@ -381,6 +473,9 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
         SharedPreferences prefs = getSharedPreferences(this.PREFERENCES_NAME, Context.MODE_PRIVATE);
         SharedPreferences.Editor edit = prefs.edit();
         edit.putInt(this.MAGNITUDE_VALUE, this.lastMagnitudeValue);
+        edit.putFloat(this.ALTITUDE_VALUE, this.locationAltitude);
+        edit.putFloat(this.LATITUDE_VALUE, this.locationLatitude);
+        edit.putFloat(this.LONGITUDE_VALUE, this.locationLongitude);
         if (newTimeValue > 0) {
             edit.putLong(this.RUNTIME_VALUE, newTimeValue);
         }
@@ -392,12 +487,22 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
         Date current = new Date();
         long newTimeValue = this.lastTime + (current.getTime() - this.startTime.getTime()) / 1000;
         super.onPause();
-        delete_camera();
+        deleteCamera();
         if (lightsSensorListener != null && sensorManager != null) {
             sensorManager.unregisterListener(lightsSensorListener);
         }
         lightsSensorListener = null;
         sensorManager = null;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (checkSelfPermission(android.Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                if (locationManager != null && locationListener != null) {
+                    locationManager.removeUpdates(locationListener);
+                    locationListener = null;
+                    locationManager = null;
+                }
+            }
+        }
+
         this.savePreferences(newTimeValue);
     }
 
@@ -415,6 +520,10 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
             case R.id.settings:
                 Intent intent = new Intent(this, SettingsActivity.class);
                 this.startActivity(intent);
+                return true;
+            case R.id.source_code:
+                Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/0lvin/LightSensor"));
+                startActivity(browserIntent);
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
@@ -454,6 +563,28 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
         stateText += Long.toString(usedHours) + " " + getString(R.string.hours) + " ";
         stateText += Long.toString(usedMinutes) + " " + getString(R.string.minutes) + " ";
         stateText += Long.toString(usedSeconds) + " " + getString(R.string.seconds) + ".\n";
+        stateText += "Latitude: " + Float.toString(locationLatitude) + "\n";
+        stateText += "Longitude: " + Float.toString(locationLongitude) + "\n";
+        stateText += "Altitude: " + Float.toString(locationAltitude) + "\n";
+
+        double sunrise = UnlockReceiver.getSunsetTime(true, locationLongitude, locationLatitude);
+        if (sunrise < -1 && sunrise > 24) {
+            stateText += "The sun never rises on this location (on the specified date)\n";
+        } else {
+            int hour = (int) sunrise;
+            int minutes = (int) ((sunrise - hour) * 60);
+            stateText += String.format("Sunrise: %d:%02d\n", hour, minutes);
+        }
+
+        double sunset = UnlockReceiver.getSunsetTime(false, locationLongitude, locationLatitude);
+        if (sunset < -1 && sunset > 24) {
+            stateText += "The sun never rises on this location (on the specified date)\n";
+        } else {
+            int hour = (int) sunset;
+            int minutes = (int) ((sunset - hour) * 60);
+            stateText += String.format("Sunset: %d:%02d\n", hour, minutes);
+        }
+
         textAuthor.setText(stateText);
         if (dontUseCamera) {
             int iColor = (int) (lastLightSensorValue / SensorManager.LIGHT_OVERCAST * 256);
@@ -479,16 +610,6 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
         }
     }
 
-    private void easterEggInit() {
-        textAuthor.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://0lvin.blogspot.com/"));
-                startActivity(browserIntent);
-            }
-        });
-    }
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -508,16 +629,20 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 
         registerBroadcastReceiver();
 
-        this.easterEggInit();
-
         this.startTime = new Date();
         if (savedInstanceState != null) {
             lastMagnitudeValue = savedInstanceState.getInt(this.MAGNITUDE_VALUE, 10);
+            locationLatitude = savedInstanceState.getFloat(this.LATITUDE_VALUE, 0);
+            locationLongitude = savedInstanceState.getFloat(this.LONGITUDE_VALUE, 0);
+            locationAltitude = savedInstanceState.getFloat(this.ALTITUDE_VALUE, 0);
             this.lastTime = savedInstanceState.getLong(this.RUNTIME_VALUE, 0);
         } else {
             SharedPreferences prefs = getSharedPreferences(this.PREFERENCES_NAME, MODE_PRIVATE);
             percentValueSettings = prefs.getInt(this.PERCENT_VALUE, 0);
             lastMagnitudeValue = prefs.getInt(this.MAGNITUDE_VALUE, 10);
+            locationAltitude = prefs.getFloat(this.ALTITUDE_VALUE, 0);
+            locationLongitude = prefs.getFloat(this.LONGITUDE_VALUE, 0);
+            locationLatitude = prefs.getFloat(this.LATITUDE_VALUE, 0);
             this.lastTime = prefs.getLong(this.RUNTIME_VALUE, 0);
         }
 
@@ -572,6 +697,9 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
         super.onSaveInstanceState(outState);
         outState.putInt(this.MAGNITUDE_VALUE, this.lastMagnitudeValue);
         outState.putLong(this.RUNTIME_VALUE, newTimeValue);
+        outState.putFloat(this.ALTITUDE_VALUE, locationAltitude);
+        outState.putFloat(this.LATITUDE_VALUE, locationLatitude);
+        outState.putFloat(this.LONGITUDE_VALUE, locationLongitude);
         super.onSaveInstanceState(outState);
     }
 
@@ -661,8 +789,6 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
         }
     }
 
-    long lastUpdateTimeMillisecondsStamp = 0;
-
     @Override
     public void onPreviewFrame(byte[] data, Camera camera) {
         try {
@@ -670,7 +796,8 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
             if (lastUpdateTimeMillisecondsStamp == currMillis)
                 return;
             lastUpdateTimeMillisecondsStamp = currMillis;
-            lastCameraSensorValue = this.getMiddleIntense(data, cameraPreviewSize.width, cameraPreviewSize.height, (int) (lastUpdateTimeMillisecondsStamp % 16), 16);
+            lastCameraSensorValue = this.getMiddleIntense(data, cameraPreviewSize.width,
+                    cameraPreviewSize.height, (int) (lastUpdateTimeMillisecondsStamp % 16), 16);
             this.updateBrightness();
             this.updateShowedValues();
         } catch (Exception e) {

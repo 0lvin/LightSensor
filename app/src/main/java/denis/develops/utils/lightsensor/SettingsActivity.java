@@ -12,6 +12,7 @@ import android.widget.TextView;
 public class SettingsActivity extends Activity {
     private TextView textPercent;
     private Switch registerSwitch;
+    private Switch registerSunSwitch;
     private Switch useBackCameraSwitch;
     private Switch canntChangeBrightnessSwitch;
     private Switch dontUseCameraSwitch;
@@ -21,6 +22,7 @@ public class SettingsActivity extends Activity {
     private boolean useBack = false;
     private boolean dontUseCamera = false;
     private boolean cannotChangeBrightness = false;
+    private boolean sunServiceEnabled = false;
 
     private void updateTextValues() {
         textPercent.setText(Integer.toString(lastPercentValue) + "%");
@@ -33,6 +35,9 @@ public class SettingsActivity extends Activity {
         textPercent = (TextView) findViewById(R.id.textPercent);
         percent_seek = (SeekBar) findViewById(R.id.percentValue);
         registerSwitch = (Switch) findViewById(R.id.switchAuto);
+        registerSunSwitch = (Switch) findViewById(R.id.switchAutoSun);
+
+
         canntChangeBrightnessSwitch = (Switch) findViewById(R.id.disableChangeBrightness);
         useBackCameraSwitch = (Switch) findViewById(R.id.useBackCamera);
         dontUseCameraSwitch = (Switch) findViewById(R.id.dontUseCamera);
@@ -72,6 +77,16 @@ public class SettingsActivity extends Activity {
         });
         serviceEnabled = registerSwitch.isChecked();
 
+        registerSunSwitch.setChecked(prefs.getBoolean(MainActivity.AUTO_SUN_VALUE, false));
+        registerSunSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                sunServiceEnabled = b;
+                savePreferences();
+            }
+        });
+        sunServiceEnabled = registerSunSwitch.isChecked();
+
         useBackCameraSwitch.setChecked(prefs.getBoolean(MainActivity.USE_BACK_CAMERA, false));
         useBackCameraSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
@@ -107,6 +122,7 @@ public class SettingsActivity extends Activity {
         SharedPreferences prefs = getSharedPreferences(MainActivity.PREFERENCES_NAME, Context.MODE_PRIVATE);
         SharedPreferences.Editor edit = prefs.edit();
         edit.putBoolean(MainActivity.AUTO_VALUE, serviceEnabled);
+        edit.putBoolean(MainActivity.AUTO_SUN_VALUE, sunServiceEnabled);
         edit.putInt(MainActivity.PERCENT_VALUE, this.lastPercentValue);
         edit.putBoolean(MainActivity.DISABLE_CHANGE_BRIGHTNESS, cannotChangeBrightness);
         edit.putBoolean(MainActivity.USE_BACK_CAMERA, useBack);

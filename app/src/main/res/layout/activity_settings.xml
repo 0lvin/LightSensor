@@ -60,6 +60,13 @@
         android:text="@string/auto_fix" />
 
     <Switch
+        android:id="@+id/switchAutoSun"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:checked="false"
+        android:text="@string/auto_sun_fix" />
+
+    <Switch
         android:id="@+id/useBackCamera"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"

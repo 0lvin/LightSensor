@@ -21,4 +21,5 @@
     <string name="use_back_camera">Использовать заднюю камеру</string>
     <string name="disable_change_brightness">Не изменять подсветку</string>
     <string name="dont_use_camera">Не использовать камеру.</string>
+    <string name="auto_sun_fix">Учитывать восход/заход солнца при разблокировке</string>
 </resources>
