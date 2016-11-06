@@ -22,4 +22,12 @@
     <string name="disable_change_brightness">Не изменять подсветку</string>
     <string name="dont_use_camera">Не использовать камеру.</string>
     <string name="auto_sun_fix">Учитывать восход/заход солнца при разблокировке</string>
+    <string name="sunset_time">Заход: %1$d:%2$02d</string>
+    <string name="sunrise_time">Восход: %1$d:%2$02d</string>
+    <string name="sun_never_sets">Солнце никогда не заходит на этом месте (на указанную дату).</string>
+    <string name="sun_never_rises">Солнце никогда не поднимается на этом месте (на указанную дату).</string>
+    <string name="source_code">Исходный код</string>
+    <string name="LongString">Долгота: %f</string>
+    <string name="LatString">Широта: %f</string>
+    <string name="AltString">Высота над уровнем моря: %f</string>
 </resources>

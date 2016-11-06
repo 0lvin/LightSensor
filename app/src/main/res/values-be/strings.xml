@@ -21,4 +21,13 @@
     <string name="disable_change_brightness">Адключыць старонка яркасьці</string>
     <string name="use_back_camera">Выкарыстоўваць заднюю камеру</string>
     <string name="dont_use_camera">Не выкарыстоўваць камеру.</string>
+    <string name="sunset_time">Заход: %1$d:%2$02d</string>
+    <string name="sunrise_time">Узыход: %1$d:%2$02d</string>
+    <string name="sun_never_sets">Сонца ніколі не заходзіць на гэтым месцы (на паказаную дату).</string>
+    <string name="sun_never_rises">Сонца ніколі не падымаецца на гэтым месцы (на паказаную дату).</string>
+    <string name="source_code">Зыходны код</string>
+    <string name="auto_sun_fix">Выкарыстоўвайце час усходу/заходу сонца на разблакоўку</string>
+    <string name="LongString">Даўгата: %f</string>
+    <string name="LatString">Шырата: %f</string>
+    <string name="AltString">Вышыня над узроўнем мора: %f</string>
 </resources>

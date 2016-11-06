@@ -21,4 +21,13 @@
     <string name="disable_change_brightness">Wyłącz zmianę jasności</string>
     <string name="use_back_camera">Skorzystaj z tyłu aparatu</string>
     <string name="dont_use_camera">Nie należy korzystać z aparatu.</string>
+    <string name="sunset_time">Zachód słońca: %1$d:%2$02d</string>
+    <string name="sunrise_time">Wschód słońca: %1$d:%2$02d</string>
+    <string name="sun_never_sets">Słońce nigdy nie zachodzi w tym miejscu (w określonym terminie).</string>
+    <string name="sun_never_rises">Słońce nigdy nie wschodzi w tym miejscu (w określonym terminie).</string>
+    <string name="source_code">Kod źródłowy</string>
+    <string name="auto_sun_fix">Użyj czasu wschodów/zachodów słońca na odblokowanie</string>
+    <string name="LongString">Długość geograficzna: %f</string>
+    <string name="LatString">Szerokość: %f</string>
+    <string name="AltString">Wysokość: %f</string>
 </resources>

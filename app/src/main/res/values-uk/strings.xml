@@ -21,4 +21,13 @@
     <string name="use_back_camera">Використовувати задню камеру</string>
     <string name="disable_change_brightness">Не змінювати яскравість екрану</string>
     <string name="dont_use_camera">Не використовувати камеру.</string>
+    <string name="sunset_time">Захід: %1$d:%2$02d</string>
+    <string name="sunrise_time">Схід: %1$d:%2$02d</string>
+    <string name="sun_never_sets">Сонце ніколи не заходить на цьому місці (на зазначену дату).</string>
+    <string name="sun_never_rises">Сонце ніколи не піднімається на цьому місці (на зазначену дату).</string>
+    <string name="source_code">Вихідний код</string>
+    <string name="auto_sun_fix">Використовуйте час сходу/заходу сонця на розблокування</string>
+    <string name="LongString">Довгота: %f</string>
+    <string name="AltString">Висота над рівнем моря: %f</string>
+    <string name="LatString">Широта: %f</string>
 </resources>
