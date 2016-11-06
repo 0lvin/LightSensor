@@ -23,4 +23,7 @@
     <string name="disable_change_brightness">Disable change brightness.</string>
     <string name="dont_use_camera">Do not use camera.</string>
     <string name="source_code">Source Code</string>
+    <string name="LatString">Latitude: %f</string>
+    <string name="LongString">Longitude: %f</string>
+    <string name="AltString">Altitude: %f</string>
 </resources>

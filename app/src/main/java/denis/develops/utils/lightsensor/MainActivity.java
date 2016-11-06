@@ -38,6 +38,7 @@ import android.widget.TextView;
 import java.io.IOException;
 import java.util.Date;
 import java.util.List;
+import java.util.regex.Pattern;
 
 public class MainActivity extends Activity implements SurfaceHolder.Callback, Camera.PreviewCallback, Camera.AutoFocusCallback {
 
@@ -88,11 +89,11 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
     private long lastTime;
     private long lastUpdate = 0;
     // location
-    private LocationManager locationManager = null;
     private LocationListener locationListener = null;
     private float locationAltitude = 0;
     private float locationLongitude = 0;
     private float locationLatitude = 0;
+    private String locationString = "";
 
     /*
       data - NV21 raw data from camera (width * height * 2),
@@ -155,6 +156,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
         String fullIsoListString = params.get("iso-values");
         int minIso = 0;
         String result = null;
+        Pattern intPattern = Pattern.compile("\\d+");
         if (fullIsoListString != null) {
             String[] fullIsoList = fullIsoListString.split(",");
             for (int i = 0; i < fullIsoList.length; i++) {
@@ -170,12 +172,11 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
                 if ("auto".equals(isoString))
                     continue;
 
+                if (!intPattern.matcher(isoString).matches())
+                    continue;
+
                 // try convert to int
-                try {
-                    currValue = Integer.parseInt(isoString);
-                } catch (Exception e) {
-                    Log.e(this.EVENTS_NAME, "Can not convert iso to int:" + e.toString());
-                }
+                currValue = Integer.parseInt(isoString);
                 if (minIso == 0) {
                     minIso = currValue;
                     result = fullIsoList[i];
@@ -300,27 +301,31 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
         } else {
             dontUseCamera = true;
         }
-
     }
 
     private void updateLocation(Location location) {
-        try {
-            locationAltitude = (float) Math.round(location.getAltitude() * PRECISE) / PRECISE;
-            locationLongitude = (float) Math.round(location.getLongitude() * PRECISE) / PRECISE;
-            locationLatitude = (float) Math.round(location.getLatitude() * PRECISE) / PRECISE;
-            Log.i(this.EVENTS_NAME, "Location: " + Float.toString(locationLatitude) + "/" + Float.toString(locationLongitude) + ":" + Float.toString(locationAltitude));
-        } catch (Exception e) {
-            Log.e(this.EVENTS_NAME, "Issue with location:" + e.toString());
+        if (location != null) {
+            try {
+                locationAltitude = (float) Math.round(location.getAltitude() * PRECISE) / PRECISE;
+                locationLongitude = (float) Math.round(location.getLongitude() * PRECISE) / PRECISE;
+                locationLatitude = (float) Math.round(location.getLatitude() * PRECISE) / PRECISE;
+                Log.i(this.EVENTS_NAME, String.format(getString(R.string.LatString), locationLatitude));
+                Log.i(this.EVENTS_NAME, String.format(getString(R.string.LongString), locationLongitude));
+                Log.i(this.EVENTS_NAME, String.format(getString(R.string.AltString), locationAltitude));
+            } catch (Exception e) {
+                Log.e(this.EVENTS_NAME, "Issue with location:" + e.toString());
+            }
         }
+        generateLocationStrint();
     }
 
     private void initLocationSensor() {
-        if (locationManager != null)
+        if (locationListener != null)
             return;
 
         // init location receiver
         // Acquire a reference to the system Location Manager
-        locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+        LocationManager locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
 
         // Define a listener that responds to location updates
         locationListener = new LocationListener() {
@@ -348,7 +353,6 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
             }
         }
     }
-
 
     @Override
     protected void onResume() {
@@ -495,10 +499,12 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
         sensorManager = null;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (checkSelfPermission(android.Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-                if (locationManager != null && locationListener != null) {
+                if (locationListener != null) {
+                    // init location receiver
+                    // Acquire a reference to the system Location Manager
+                    LocationManager locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
                     locationManager.removeUpdates(locationListener);
                     locationListener = null;
-                    locationManager = null;
                 }
             }
         }
@@ -522,12 +528,39 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
                 this.startActivity(intent);
                 return true;
             case R.id.source_code:
-                Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/0lvin/LightSensor"));
+                Intent browserIntent = new Intent(Intent.ACTION_VIEW,
+                        Uri.parse("https://github.com/0lvin/LightSensor"));
                 startActivity(browserIntent);
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
+    }
+
+    private void generateLocationStrint() {
+        locationString = String.format(getString(R.string.LatString) + "\n" +
+                        getString(R.string.LongString) + "\n" +
+                        getString(R.string.AltString) + "\n",
+                locationLatitude, locationLongitude, locationAltitude);
+
+        double sunrise = UnlockReceiver.getSunsetTime(true, locationLongitude, locationLatitude);
+        if (sunrise < -1 && sunrise > 24) {
+            locationString += "The sun never rises on this location (on the specified date)\n";
+        } else {
+            int hour = (int) sunrise;
+            int minutes = (int) ((sunrise - hour) * 60);
+            locationString += String.format("Sunrise: %d:%02d\n", hour, minutes);
+        }
+
+        double sunset = UnlockReceiver.getSunsetTime(false, locationLongitude, locationLatitude);
+        if (sunset < -1 && sunset > 24) {
+            locationString += "The sun never rises on this location (on the specified date)\n";
+        } else {
+            int hour = (int) sunset;
+            int minutes = (int) ((sunset - hour) * 60);
+            locationString += String.format("Sunset: %d:%02d\n", hour, minutes);
+        }
+
     }
 
     private void updateShowedValues() {
@@ -563,27 +596,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
         stateText += Long.toString(usedHours) + " " + getString(R.string.hours) + " ";
         stateText += Long.toString(usedMinutes) + " " + getString(R.string.minutes) + " ";
         stateText += Long.toString(usedSeconds) + " " + getString(R.string.seconds) + ".\n";
-        stateText += "Latitude: " + Float.toString(locationLatitude) + "\n";
-        stateText += "Longitude: " + Float.toString(locationLongitude) + "\n";
-        stateText += "Altitude: " + Float.toString(locationAltitude) + "\n";
-
-        double sunrise = UnlockReceiver.getSunsetTime(true, locationLongitude, locationLatitude);
-        if (sunrise < -1 && sunrise > 24) {
-            stateText += "The sun never rises on this location (on the specified date)\n";
-        } else {
-            int hour = (int) sunrise;
-            int minutes = (int) ((sunrise - hour) * 60);
-            stateText += String.format("Sunrise: %d:%02d\n", hour, minutes);
-        }
-
-        double sunset = UnlockReceiver.getSunsetTime(false, locationLongitude, locationLatitude);
-        if (sunset < -1 && sunset > 24) {
-            stateText += "The sun never rises on this location (on the specified date)\n";
-        } else {
-            int hour = (int) sunset;
-            int minutes = (int) ((sunset - hour) * 60);
-            stateText += String.format("Sunset: %d:%02d\n", hour, minutes);
-        }
+        stateText += this.locationString;
 
         textAuthor.setText(stateText);
         if (dontUseCamera) {
@@ -645,7 +658,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
             locationLatitude = prefs.getFloat(this.LATITUDE_VALUE, 0);
             this.lastTime = prefs.getLong(this.RUNTIME_VALUE, 0);
         }
-
+        this.generateLocationStrint();
         magnitude_seek.setMax(40);
         magnitude_seek.setProgress(lastMagnitudeValue);
         magnitude_seek.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
