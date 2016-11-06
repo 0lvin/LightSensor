@@ -26,4 +26,8 @@
     <string name="LatString">Latitude: %f</string>
     <string name="LongString">Longitude: %f</string>
     <string name="AltString">Altitude: %f</string>
+    <string name="sun_never_rises">The sun never rises on this location (on the specified date)</string>
+    <string name="sun_never_sets">The sun never sets on this location (on the specified date).</string>
+    <string name="sunrise_time">Sunrise: %1$d:%2$02d</string>
+    <string name="sunset_time">Sunset: %1$d:%2$02d</string>
 </resources>

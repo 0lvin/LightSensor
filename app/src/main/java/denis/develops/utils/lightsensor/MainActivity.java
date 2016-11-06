@@ -545,22 +545,23 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 
         double sunrise = UnlockReceiver.getSunsetTime(true, locationLongitude, locationLatitude);
         if (sunrise < -1 && sunrise > 24) {
-            locationString += "The sun never rises on this location (on the specified date)\n";
+            locationString += getString(R.string.sun_never_rises);
         } else {
             int hour = (int) sunrise;
             int minutes = (int) ((sunrise - hour) * 60);
-            locationString += String.format("Sunrise: %d:%02d\n", hour, minutes);
+            locationString += String.format(getString(R.string.sunrise_time), hour, minutes);
         }
+        locationString += "\n";
 
         double sunset = UnlockReceiver.getSunsetTime(false, locationLongitude, locationLatitude);
         if (sunset < -1 && sunset > 24) {
-            locationString += "The sun never rises on this location (on the specified date)\n";
+            locationString += getString(R.string.sun_never_sets);
         } else {
             int hour = (int) sunset;
             int minutes = (int) ((sunset - hour) * 60);
-            locationString += String.format("Sunset: %d:%02d\n", hour, minutes);
+            locationString += String.format(getString(R.string.sunset_time), hour, minutes);
         }
-
+        locationString += "\n";
     }
 
     private void updateShowedValues() {

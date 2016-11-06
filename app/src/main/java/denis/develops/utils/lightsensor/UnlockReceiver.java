@@ -124,6 +124,7 @@ public class UnlockReceiver extends BroadcastReceiver {
             double minDegree = curr_time_hour * 360 / 24 + 270;
             // 0 hour -> sin(270) -> -1
             auto_value = Math.sin(Math.toRadians(minDegree)) * 128 + 128;
+            Log.i(EVENTS_NAME, "Auto value:" + Double.toString(auto_value));
         }
 
         if (sun_change) {
@@ -145,6 +146,7 @@ public class UnlockReceiver extends BroadcastReceiver {
                         sun_change = false;
                     }
                 }
+                Log.i(EVENTS_NAME, "Sun value:" + Double.toString(sun_value));
             }
         }
         double summ_value = 0;
