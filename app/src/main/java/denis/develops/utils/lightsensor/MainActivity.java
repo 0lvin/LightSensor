@@ -50,6 +50,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
     final static String AUTO_VALUE = "AutoUpdateOnEvent";
     final static String AUTO_SUN_VALUE = "AutoUpdateOnEventSun";
     final static String DISABLE_CHANGE_BRIGHTNESS = "DisableChangeBrightness";
+    final static String USE_FOOT_CANDLE_FOR_SHOW = "FootCandle";
     final static String DISABLE_CAMERA = "DisableCamera";
     final static String USE_BACK_CAMERA = "UseBackCamera";
     final static String ALTITUDE_VALUE = "AltitudeValue";
@@ -83,6 +84,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
     private boolean useSunFix = false;
     private boolean cannotChangeBrightness = false;
     private boolean dontUseCamera = false;
+    private boolean useFootCandle = false;
     private TextView textCameraLight;
     private TextView textMagnitude;
     private Date startTime;
@@ -358,6 +360,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
     protected void onResume() {
         super.onResume();
         SharedPreferences prefs = getSharedPreferences(this.PREFERENCES_NAME, MODE_PRIVATE);
+        useFootCandle = prefs.getBoolean(this.USE_FOOT_CANDLE_FOR_SHOW, false);
         percentValueSettings = prefs.getInt(this.PERCENT_VALUE, 0);
         cannotChangeBrightness = prefs.getBoolean(this.DISABLE_CHANGE_BRIGHTNESS, false);
         dontUseCamera = prefs.getBoolean(this.DISABLE_CAMERA, false);
@@ -578,19 +581,33 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
         if (!this.usedLightSensor) {
             textLightSensor.setText(sensorText + getString(R.string.sensor_not_exist));
         } else {
-            textLightSensor.setText(sensorText + Integer.toString((int) lastLightSensorValue));
+            if (this.useFootCandle) {
+                textLightSensor.setText(sensorText + String.format("%.2f", (float)(lastLightSensorValue * 0.0929)));
+            } else {
+                textLightSensor.setText(sensorText + String.format("%.1f", (float)lastLightSensorValue));
+            }
         }
         String cameraText = getString(R.string.camera_light);
-        textCameraLight.setText(cameraText + Integer.toString((int) (SensorManager.LIGHT_OVERCAST * lastCameraSensorValue / 255)));
+        float light_value_lux = SensorManager.LIGHT_OVERCAST * lastCameraSensorValue / 255;
+        if (useFootCandle) {
+            textCameraLight.setText(cameraText + String.format("%.2f", (float)(light_value_lux * 0.0929)));
+        } else {
+            textCameraLight.setText(cameraText + String.format("%.1f", (float)light_value_lux));
+        }
         textMagnitude.setText(Float.toString(getMagnitude()) + "x");
         String stateText = getString(R.string.license_text) + "\n";
-        if (usedLightSensor) {
+        if (this.useFootCandle) {
+            stateText += getString(R.string.used_foot_candle) + "\n";
+        } else {
+            stateText += getString(R.string.used_lux) + "\n";
+        }
+        if (this.usedLightSensor) {
             stateText += getString(R.string.used_light_sensor) + "\n";
         }
-        if (usedBack) {
+        if (this.usedBack) {
             stateText += getString(R.string.used_back_camera) + "\n";
         }
-        if (usedFront) {
+        if (this.usedFront) {
             stateText += getString(R.string.used_front_camera) + "\n";
         }
         stateText += getString(R.string.have_used_for) + " ";

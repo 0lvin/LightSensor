@@ -14,7 +14,7 @@
     <string name="hours">гадзін</string>
     <string name="minutes">хвілін</string>
     <string name="seconds">секунд</string>
-    <string name="auto_fix">Абнаўляць на расблокировку па часе сутак</string>
+    <string name="auto_fix">Абнаўляць на разблакоўку па часе сутак</string>
     <string name="percent_value">0%</string>
     <string name="minPercentTitle">Мінімальная падсвятленне</string>
     <string name="settings">Налады</string>

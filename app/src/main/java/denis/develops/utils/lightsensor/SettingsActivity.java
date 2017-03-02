@@ -14,12 +14,14 @@ public class SettingsActivity extends Activity {
     private Switch registerSwitch;
     private Switch registerSunSwitch;
     private Switch useBackCameraSwitch;
+    private Switch useFootCandleSwitch;
     private Switch canntChangeBrightnessSwitch;
     private Switch dontUseCameraSwitch;
     private int lastPercentValue = 0;
     private SeekBar percent_seek;
     private boolean serviceEnabled = false;
     private boolean useBack = false;
+    private boolean useFootCandle = false;
     private boolean dontUseCamera = false;
     private boolean cannotChangeBrightness = false;
     private boolean sunServiceEnabled = false;
@@ -39,6 +41,7 @@ public class SettingsActivity extends Activity {
 
 
         canntChangeBrightnessSwitch = (Switch) findViewById(R.id.disableChangeBrightness);
+        useFootCandleSwitch = (Switch) findViewById(R.id.use_foot_candle);
         useBackCameraSwitch = (Switch) findViewById(R.id.useBackCamera);
         dontUseCameraSwitch = (Switch) findViewById(R.id.dontUseCamera);
 
@@ -66,6 +69,17 @@ public class SettingsActivity extends Activity {
 
             }
         });
+
+
+        useFootCandleSwitch.setChecked(prefs.getBoolean(MainActivity.USE_FOOT_CANDLE_FOR_SHOW, false));
+        useFootCandleSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                useFootCandle = b;
+                savePreferences();
+            }
+        });
+        useFootCandle = useFootCandleSwitch.isChecked();
 
         registerSwitch.setChecked(prefs.getBoolean(MainActivity.AUTO_VALUE, false));
         registerSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
@@ -123,9 +137,11 @@ public class SettingsActivity extends Activity {
         SharedPreferences.Editor edit = prefs.edit();
         edit.putBoolean(MainActivity.AUTO_VALUE, serviceEnabled);
         edit.putBoolean(MainActivity.AUTO_SUN_VALUE, sunServiceEnabled);
+        edit.putBoolean(MainActivity.USE_FOOT_CANDLE_FOR_SHOW, useFootCandle);
         edit.putInt(MainActivity.PERCENT_VALUE, this.lastPercentValue);
         edit.putBoolean(MainActivity.DISABLE_CHANGE_BRIGHTNESS, cannotChangeBrightness);
         edit.putBoolean(MainActivity.USE_BACK_CAMERA, useBack);
+        edit.putBoolean(MainActivity.USE_FOOT_CANDLE_FOR_SHOW, useFootCandle);
         edit.putBoolean(MainActivity.DISABLE_CAMERA, dontUseCamera);
         edit.apply();
     }
