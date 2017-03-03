@@ -44,7 +44,8 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 
     final static String PREFERENCES_NAME = "preferences";
     final static String MAGNITUDE_VALUE = "MagnitudeValue";
-    final static String PERCENT_VALUE = "PercentValue";
+    final static String MIN_PERCENT_VALUE = "PercentValue";
+    final static String MAX_PERCENT_VALUE = "MaxPercentValue";
     final static String RUNTIME_VALUE = "LastRunTime";
     final static String EVENTS_NAME = "LightsSensors";
     final static String AUTO_VALUE = "AutoUpdateOnEvent";
@@ -67,7 +68,8 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
     private ContentResolver cResolver;
     private int lastBrightnessValue = 0;
     private int lastMagnitudeValue = 10;
-    private int percentValueSettings = 0;
+    private int minPercentValueSettings = 0;
+    private int maxPercentValueSettings = 100;
     private float lastLightSensorValue = 0;
     private float lastCameraSensorValue = 0;
     private ProgressBar bar;
@@ -361,7 +363,8 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
         super.onResume();
         SharedPreferences prefs = getSharedPreferences(this.PREFERENCES_NAME, MODE_PRIVATE);
         useFootCandle = prefs.getBoolean(this.USE_FOOT_CANDLE_FOR_SHOW, false);
-        percentValueSettings = prefs.getInt(this.PERCENT_VALUE, 0);
+        minPercentValueSettings = prefs.getInt(this.MIN_PERCENT_VALUE, 0);
+        maxPercentValueSettings = prefs.getInt(this.MAX_PERCENT_VALUE, 100);
         cannotChangeBrightness = prefs.getBoolean(this.DISABLE_CHANGE_BRIGHTNESS, false);
         dontUseCamera = prefs.getBoolean(this.DISABLE_CAMERA, false);
         if (!cannotChangeBrightness || !dontUseCamera) {
@@ -669,7 +672,8 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
             this.lastTime = savedInstanceState.getLong(this.RUNTIME_VALUE, 0);
         } else {
             SharedPreferences prefs = getSharedPreferences(this.PREFERENCES_NAME, MODE_PRIVATE);
-            percentValueSettings = prefs.getInt(this.PERCENT_VALUE, 0);
+            minPercentValueSettings = prefs.getInt(this.MIN_PERCENT_VALUE, 0);
+            maxPercentValueSettings = prefs.getInt(this.MAX_PERCENT_VALUE, 100);
             lastMagnitudeValue = prefs.getInt(this.MAGNITUDE_VALUE, 10);
             locationAltitude = prefs.getFloat(this.ALTITUDE_VALUE, 0);
             locationLongitude = prefs.getFloat(this.LONGITUDE_VALUE, 0);
@@ -793,7 +797,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 
     private void updateBrightness() {
         float cameraLightValue = lastCameraSensorValue * getMagnitude()
-                + (percentValueSettings * 256 / 100);
+                + (minPercentValueSettings * 256 / 100);
         float sensorLightValue = lastLightSensorValue / SensorManager.LIGHT_OVERCAST * 256;
         if (!usedLightSensor) {
             // we don't have such sensor so use value from camera
@@ -801,7 +805,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
         }
 
         // create something in the middle
-        int newBrightness = (int) ((sensorLightValue + cameraLightValue + lastBrightnessValue) / 3);
+        int newBrightness = Math.min((int) ((sensorLightValue + cameraLightValue + lastBrightnessValue) / 3), maxPercentValueSettings * 256 / 100);
         if (newBrightness > 255) {
             newBrightness = 255;
         }

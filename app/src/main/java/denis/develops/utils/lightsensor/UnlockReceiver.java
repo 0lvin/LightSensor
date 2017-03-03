@@ -116,7 +116,8 @@ public class UnlockReceiver extends BroadcastReceiver {
             return;
         }
         Calendar curCalendar = Calendar.getInstance();
-        float percentValue = prefs.getInt(MainActivity.PERCENT_VALUE, 0);
+        float minPercentValue = prefs.getInt(MainActivity.MIN_PERCENT_VALUE, 0);
+        float maxPercentValue = prefs.getInt(MainActivity.MAX_PERCENT_VALUE, 100);
         double auto_value = 255;
         double sun_value = 255;
         double curr_time_hour = curCalendar.get(Calendar.HOUR_OF_DAY) + (float) curCalendar.get(Calendar.MINUTE) / 60;
@@ -158,8 +159,7 @@ public class UnlockReceiver extends BroadcastReceiver {
             summ_value = auto_value;
         }
         try {
-
-            double value = Math.min(summ_value + (percentValue * 256 / 100), 256);
+            double value = Math.min(summ_value + (minPercentValue * 256 / 100), (maxPercentValue * 256 / 100));
 
             Log.i(EVENTS_NAME, "Set brightness to " + Double.toString(value));
             Settings.System.putInt(context.getContentResolver(), Settings.System.SCREEN_BRIGHTNESS, (int) value);
