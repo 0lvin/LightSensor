@@ -4,7 +4,6 @@
     <string name="camera_light">Камера:</string>
     <string name="camera_preview">Препросмотр камеры</string>
     <string name="license_text">Распрацавана Denis Pauk aka Olvin і Mitrand , 2015-2016 . Ліцэнзавана згодна GPL2 .</string>
-    <string name="magnitude_value">9.9x</string>
     <string name="sensor_light">Сэнсар:</string>
     <string name="sensor_not_exist">няма</string>
     <string name="used_back_camera">Выкарыстоўваецца задняя камера</string>
@@ -15,7 +14,6 @@
     <string name="minutes">хвілін</string>
     <string name="seconds">секунд</string>
     <string name="auto_fix">Абнаўляць на разблакоўку па часе сутак</string>
-    <string name="percent_value">0%</string>
     <string name="minPercentTitle">Мінімальная падсвятленне</string>
     <string name="settings">Налады</string>
     <string name="disable_change_brightness">Адключыць старонка яркасьці</string>
@@ -30,4 +28,9 @@
     <string name="LongString">Даўгата: %f</string>
     <string name="LatString">Шырата: %f</string>
     <string name="AltString">Вышыня над узроўнем мора: %f</string>
+    <string name="used_lux">Выкарыстоўваюцца значэння ў lux(0.0929 foot candle).</string>
+    <string name="used_foot_candle">Паказаць значэння foot candle.</string>
+    <string name="use_foot_candle">Выкарыстоўваць foot candle.</string>
+    <string name="maxPercentTitle">Максімальнае значэнне яркасці.</string>
+    <string name="magnitudeSensorTitle">Павялічыць значэнне для датчыка святла ў</string>
 </resources>

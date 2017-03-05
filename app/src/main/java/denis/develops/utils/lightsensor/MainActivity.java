@@ -44,6 +44,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 
     final static String PREFERENCES_NAME = "preferences";
     final static String MAGNITUDE_VALUE = "MagnitudeValue";
+    final static String MAGNITUDE_SENSOR_VALUE = "MagnitudeSensorValue";
     final static String MIN_PERCENT_VALUE = "PercentValue";
     final static String MAX_PERCENT_VALUE = "MaxPercentValue";
     final static String RUNTIME_VALUE = "LastRunTime";
@@ -68,6 +69,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
     private ContentResolver cResolver;
     private int lastBrightnessValue = 0;
     private int lastMagnitudeValue = 10;
+    private int lastMagnitudeSensorValue = 10;
     private int minPercentValueSettings = 0;
     private int maxPercentValueSettings = 100;
     private float lastLightSensorValue = 0;
@@ -320,7 +322,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
                 Log.e(this.EVENTS_NAME, "Issue with location:" + e.toString());
             }
         }
-        generateLocationStrint();
+        generateLocationString();
     }
 
     private void initLocationSensor() {
@@ -543,7 +545,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
         }
     }
 
-    private void generateLocationStrint() {
+    private void generateLocationString() {
         locationString = String.format(getString(R.string.LatString) + "\n" +
                         getString(R.string.LongString) + "\n" +
                         getString(R.string.AltString) + "\n",
@@ -664,6 +666,10 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
         registerBroadcastReceiver();
 
         this.startTime = new Date();
+        SharedPreferences prefs = getSharedPreferences(this.PREFERENCES_NAME, MODE_PRIVATE);
+        lastMagnitudeSensorValue = prefs.getInt(this.MAGNITUDE_SENSOR_VALUE, 10);
+        minPercentValueSettings = prefs.getInt(this.MIN_PERCENT_VALUE, 0);
+        maxPercentValueSettings = prefs.getInt(this.MAX_PERCENT_VALUE, 100);
         if (savedInstanceState != null) {
             lastMagnitudeValue = savedInstanceState.getInt(this.MAGNITUDE_VALUE, 10);
             locationLatitude = savedInstanceState.getFloat(this.LATITUDE_VALUE, 0);
@@ -671,16 +677,13 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
             locationAltitude = savedInstanceState.getFloat(this.ALTITUDE_VALUE, 0);
             this.lastTime = savedInstanceState.getLong(this.RUNTIME_VALUE, 0);
         } else {
-            SharedPreferences prefs = getSharedPreferences(this.PREFERENCES_NAME, MODE_PRIVATE);
-            minPercentValueSettings = prefs.getInt(this.MIN_PERCENT_VALUE, 0);
-            maxPercentValueSettings = prefs.getInt(this.MAX_PERCENT_VALUE, 100);
             lastMagnitudeValue = prefs.getInt(this.MAGNITUDE_VALUE, 10);
             locationAltitude = prefs.getFloat(this.ALTITUDE_VALUE, 0);
             locationLongitude = prefs.getFloat(this.LONGITUDE_VALUE, 0);
             locationLatitude = prefs.getFloat(this.LATITUDE_VALUE, 0);
             this.lastTime = prefs.getLong(this.RUNTIME_VALUE, 0);
         }
-        this.generateLocationStrint();
+        this.generateLocationString();
         magnitude_seek.setMax(40);
         magnitude_seek.setProgress(lastMagnitudeValue);
         magnitude_seek.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
@@ -712,7 +715,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
         lightsSensorListener = new SensorEventListener() {
             @Override
             public void onSensorChanged(SensorEvent event) {
-                lastLightSensorValue = event.values[0];
+                lastLightSensorValue = event.values[0] * getSensorMagnitude();
                 updateShowedValues();
                 updateBrightness();
             }
@@ -793,6 +796,10 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 
     private float getMagnitude() {
         return (((float) lastMagnitudeValue + 10) / 20);
+    }
+
+    private float getSensorMagnitude() {
+        return (((float) lastMagnitudeSensorValue + 10) / 20);
     }
 
     private void updateBrightness() {

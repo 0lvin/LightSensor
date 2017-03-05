@@ -3,7 +3,6 @@
     <string name="app_name">Сzujnik światła</string>
     <string name="sensor_light">Światło przez czujnik:</string>
     <string name="camera_light">Light od kamery:</string>
-    <string name="magnitude_value">9.9x</string>
     <string name="camera_preview">kamera podglądu</string>
     <string name="license_text">Twórca Dennis Pauk aka Olvin i Mitrand, 2015-2016. Licencjonowany pod GPL2.</string>
     <string name="used_front_camera">Używane przedni czujnik aparatu.</string>
@@ -15,7 +14,6 @@
     <string name="minutes">minut</string>
     <string name="seconds">sekund</string>
     <string name="auto_fix">Aktualizacja do odblokowania dla pory dnia</string>
-    <string name="percent_value">0%</string>
     <string name="minPercentTitle">Minimalna wartość jasności</string>
     <string name="settings">Ustawienia</string>
     <string name="disable_change_brightness">Wyłącz zmianę jasności</string>
@@ -30,4 +28,9 @@
     <string name="LongString">Długość geograficzna: %f</string>
     <string name="LatString">Szerokość: %f</string>
     <string name="AltString">Wysokość: %f</string>
+    <string name="used_lux">Pokaż w lux(0.0929 foot candle).</string>
+    <string name="used_foot_candle">Pokaż w foot candle.</string>
+    <string name="use_foot_candle">Używać foot candle.</string>
+    <string name="maxPercentTitle">Maksymalna wartość jasności.</string>
+    <string name="magnitudeSensorTitle">Zwiększ wartość dla czujnika światła</string>
 </resources>

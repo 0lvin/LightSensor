@@ -3,7 +3,6 @@
     <string name="app_name">Датчик світла</string>
     <string name="sensor_light">Сенсор:</string>
     <string name="camera_light">Камера:</string>
-    <string name="magnitude_value">9.9x</string>
     <string name="camera_preview">превью камери</string>
     <string name="license_text">Розроблено Denis Pauk aka 0lvin та Mitrand, 2015-2016. Лицензовано під GPL2. Може бути викорастано як завгодно в межах здорового глузду.</string>
     <string name="used_back_camera">Використовуется задня камера</string>
@@ -15,7 +14,6 @@
     <string name="minutes">хвилин</string>
     <string name="seconds">секунд</string>
     <string name="auto_fix">Оновлювати на розблокування за часом доби</string>
-    <string name="percent_value">0%</string>
     <string name="minPercentTitle">Мінімальна яскравість екрану</string>
     <string name="settings">Налаштування</string>
     <string name="use_back_camera">Використовувати задню камеру</string>
@@ -30,4 +28,9 @@
     <string name="LongString">Довгота: %f</string>
     <string name="AltString">Висота над рівнем моря: %f</string>
     <string name="LatString">Широта: %f</string>
+    <string name="used_lux">Використовуються значення в lux(0.0929 foot candle).</string>
+    <string name="used_foot_candle">Використовуються значення в foot candle.</string>
+    <string name="use_foot_candle">Використовувати foot candle.</string>
+    <string name="maxPercentTitle">Максимальне значення яскравості.</string>
+    <string name="magnitudeSensorTitle">Збільшити значення для датчика світла в</string>
 </resources>

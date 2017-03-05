@@ -4,7 +4,6 @@
     <string name="camera_light">Камера:</string>
     <string name="camera_preview">Превью камеры</string>
     <string name="license_text">Разрабочтик Denis Pauk aka Olvin и Mitrand, 2015-2016. Лицензировано согласно GPL2.</string>
-    <string name="magnitude_value">9.9x</string>
     <string name="sensor_light">Сенсор:</string>
     <string name="sensor_not_exist">Нет</string>
     <string name="used_back_camera">Используется задняя камера </string>
@@ -15,7 +14,6 @@
     <string name="minutes">минут</string>
     <string name="seconds">секунд</string>
     <string name="auto_fix">Обновлять на разблокировку по времени суток</string>
-    <string name="percent_value">0%</string>
     <string name="minPercentTitle">Минимальная подсветка</string>
     <string name="settings">Настройки</string>
     <string name="use_back_camera">Использовать заднюю камеру</string>
@@ -30,4 +28,9 @@
     <string name="LongString">Долгота: %f</string>
     <string name="LatString">Широта: %f</string>
     <string name="AltString">Высота над уровнем моря: %f</string>
+    <string name="used_lux">Используются значения в lux(0.0929 foot candle).</string>
+    <string name="used_foot_candle">Используются значения в foot candle.</string>
+    <string name="use_foot_candle">Использовать foot candle.</string>
+    <string name="maxPercentTitle">Максимальное значение яркости</string>
+    <string name="magnitudeSensorTitle">Увеличить значение для датчика света в</string>
 </resources>

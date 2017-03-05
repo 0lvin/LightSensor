@@ -12,16 +12,19 @@ import android.widget.TextView;
 public class SettingsActivity extends Activity {
     private TextView minTextPercent;
     private TextView maxTextPercent;
+    private TextView sensorTextPercent;
     private Switch registerSwitch;
     private Switch registerSunSwitch;
     private Switch useBackCameraSwitch;
     private Switch useFootCandleSwitch;
     private Switch canntChangeBrightnessSwitch;
     private Switch dontUseCameraSwitch;
+    private int lastMagnitudeSensorValue = 10;
     private int minLastPercentValue = 0;
     private int maxLastPercentValue = 100;
     private SeekBar minPercentSeek;
     private SeekBar maxPercentSeek;
+    private SeekBar magnitudeSensorSeek;
     private boolean serviceEnabled = false;
     private boolean useBack = false;
     private boolean useFootCandle = false;
@@ -32,14 +35,17 @@ public class SettingsActivity extends Activity {
     private void updateTextValues() {
         minTextPercent.setText(Integer.toString(minLastPercentValue) + "%");
         maxTextPercent.setText(Integer.toString(maxLastPercentValue) + "%");
+        sensorTextPercent.setText(Float.toString( (((float) lastMagnitudeSensorValue + 10) / 20)) + "x");
     }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings);
+        sensorTextPercent = (TextView) findViewById(R.id.textSensorMagnitude);
         minTextPercent = (TextView) findViewById(R.id.textPercent);
         maxTextPercent = (TextView) findViewById(R.id.textMaxPercent);
+        magnitudeSensorSeek = (SeekBar) findViewById(R.id.sensorMagnitudeValue);
         minPercentSeek = (SeekBar) findViewById(R.id.percentValue);
         maxPercentSeek = (SeekBar) findViewById(R.id.percentMaxValue);
         registerSwitch = (Switch) findViewById(R.id.switchAuto);
@@ -54,14 +60,37 @@ public class SettingsActivity extends Activity {
         SharedPreferences prefs = getSharedPreferences(MainActivity.PREFERENCES_NAME, MODE_PRIVATE);
         minLastPercentValue = prefs.getInt(MainActivity.MIN_PERCENT_VALUE, 0);
         maxLastPercentValue = prefs.getInt(MainActivity.MAX_PERCENT_VALUE, 100);
+        lastMagnitudeSensorValue = prefs.getInt(MainActivity.MAGNITUDE_SENSOR_VALUE, 10);
         updateTextValues();
 
-        minPercentSeek.setMax(60);
-        minPercentSeek.setProgress(minLastPercentValue);
+
+        magnitudeSensorSeek.setMax(40);
+        magnitudeSensorSeek.setProgress(lastMagnitudeSensorValue);
+        magnitudeSensorSeek.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int position, boolean b) {
+                lastMagnitudeSensorValue = position;
+                updateTextValues();
+                savePreferences();
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
+            }
+        });
+
+        minPercentSeek.setMax(70);
+        minPercentSeek.setProgress(minLastPercentValue + 10);
         minPercentSeek.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int position, boolean b) {
-                minLastPercentValue = position;
+                minLastPercentValue = position - 10;
                 savePreferences();
                 updateTextValues();
             }
@@ -77,7 +106,7 @@ public class SettingsActivity extends Activity {
             }
         });
 
-        maxPercentSeek.setMax(30);
+        maxPercentSeek.setMax(40);
         maxPercentSeek.setProgress(Math.max(maxLastPercentValue - 70, 0));
         maxPercentSeek.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
@@ -172,6 +201,7 @@ public class SettingsActivity extends Activity {
         edit.putBoolean(MainActivity.USE_BACK_CAMERA, useBack);
         edit.putBoolean(MainActivity.USE_FOOT_CANDLE_FOR_SHOW, useFootCandle);
         edit.putBoolean(MainActivity.DISABLE_CAMERA, dontUseCamera);
+        edit.putInt(MainActivity.MAGNITUDE_SENSOR_VALUE, this.lastMagnitudeSensorValue);
         edit.apply();
     }
 }
