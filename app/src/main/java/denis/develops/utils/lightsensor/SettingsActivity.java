@@ -35,7 +35,7 @@ public class SettingsActivity extends Activity {
     private void updateTextValues() {
         minTextPercent.setText(Integer.toString(minLastPercentValue) + "%");
         maxTextPercent.setText(Integer.toString(maxLastPercentValue) + "%");
-        sensorTextPercent.setText(Float.toString( (((float) lastMagnitudeSensorValue + 10) / 20)) + "x");
+        sensorTextPercent.setText(Float.toString((((float) lastMagnitudeSensorValue + 10) / 20)) + "x");
     }
 
     @Override

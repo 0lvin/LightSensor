@@ -587,17 +587,17 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
             textLightSensor.setText(sensorText + getString(R.string.sensor_not_exist));
         } else {
             if (this.useFootCandle) {
-                textLightSensor.setText(sensorText + String.format("%.2f", (float)(lastLightSensorValue * 0.0929)));
+                textLightSensor.setText(sensorText + String.format("%.2f", (float) (lastLightSensorValue * 0.0929)));
             } else {
-                textLightSensor.setText(sensorText + String.format("%.1f", (float)lastLightSensorValue));
+                textLightSensor.setText(sensorText + String.format("%.1f", (float) lastLightSensorValue));
             }
         }
         String cameraText = getString(R.string.camera_light);
         float light_value_lux = SensorManager.LIGHT_OVERCAST * lastCameraSensorValue / 255;
         if (useFootCandle) {
-            textCameraLight.setText(cameraText + String.format("%.2f", (float)(light_value_lux * 0.0929)));
+            textCameraLight.setText(cameraText + String.format("%.2f", (float) (light_value_lux * 0.0929)));
         } else {
-            textCameraLight.setText(cameraText + String.format("%.1f", (float)light_value_lux));
+            textCameraLight.setText(cameraText + String.format("%.1f", (float) light_value_lux));
         }
         textMagnitude.setText(Float.toString(getMagnitude()) + "x");
         String stateText = getString(R.string.license_text) + "\n";
