@@ -85,7 +85,7 @@
             android:textAppearance="?android:attr/textAppearanceSmall" />
     </ScrollView>
 
-    <SurfaceView
+    <TextureView
         android:id="@+id/imageView"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"

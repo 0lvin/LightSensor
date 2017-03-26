@@ -11,6 +11,7 @@ import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.graphics.Color;
 import android.graphics.ImageFormat;
+import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
 import android.hardware.Camera.CameraInfo;
 import android.hardware.Sensor;
@@ -28,8 +29,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.view.SurfaceHolder;
-import android.view.SurfaceView;
+import android.view.TextureView;
 import android.view.ViewGroup.LayoutParams;
 import android.widget.ProgressBar;
 import android.widget.SeekBar;
@@ -40,7 +40,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.regex.Pattern;
 
-public class MainActivity extends Activity implements SurfaceHolder.Callback, Camera.PreviewCallback, Camera.AutoFocusCallback {
+public class MainActivity extends Activity implements TextureView.SurfaceTextureListener, Camera.PreviewCallback, Camera.AutoFocusCallback {
 
     final static String PREFERENCES_NAME = "preferences";
     final static String MAGNITUDE_VALUE = "MagnitudeValue";
@@ -77,8 +77,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
     private ProgressBar bar;
     private SeekBar magnitude_seek;
     private Camera camera = null;
-    private SurfaceView preview;
-    private SurfaceHolder surfaceHolder;
+    private TextureView preview;
     private TextView textAuthor;
     private TextView textLightSensor;
     private boolean usedFront = false;
@@ -394,9 +393,6 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
             }
         }
         useBack = prefs.getBoolean(this.USE_BACK_CAMERA, false);
-        if (!dontUseCamera) {
-            this.initCamera();
-        }
         lastCameraSensorValue = 0;
         lastLightSensorValue = 0;
         this.initLightSensor();
@@ -499,7 +495,6 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
         Date current = new Date();
         long newTimeValue = this.lastTime + (current.getTime() - this.startTime.getTime()) / 1000;
         super.onPause();
-        deleteCamera();
         if (lightsSensorListener != null && sensorManager != null) {
             sensorManager.unregisterListener(lightsSensorListener);
         }
@@ -659,7 +654,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
         bar = (ProgressBar) findViewById(R.id.brightnessValue);
         magnitude_seek = (SeekBar) findViewById(R.id.magnitudeValue);
 
-        preview = (SurfaceView) findViewById(R.id.imageView);
+        preview = (TextureView) findViewById(R.id.imageView);
 
         cResolver = getContentResolver();
 
@@ -707,8 +702,15 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
         bar.setMax(256);
         bar.setProgress(this.lastBrightnessValue);
 
-        surfaceHolder = preview.getHolder();
-        surfaceHolder.addCallback(this);
+        // When the screen is turned off and turned back on, the SurfaceTexture is already
+        // available, and "onSurfaceTextureAvailable" will not be called. In that case, we can open
+        // a camera and start preview from here (otherwise, we wait until the surface is ready in
+        // the SurfaceTextureListener).
+        if (preview.isAvailable()) {
+            openCamera();
+        } else {
+            preview.setSurfaceTextureListener(this);
+        }
         this.updateShowedValues();
 
         // Implement a listener to receive updates
@@ -743,15 +745,16 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 
     @Override
     public void onAutoFocus(boolean success, Camera camera) {
-
     }
 
-    @Override
-    public void surfaceCreated(SurfaceHolder holder) {
+    private void openCamera() {
+        if (!dontUseCamera) {
+            this.initCamera();
+        }
+
         if (camera != null) {
             try {
-
-                camera.setPreviewDisplay(holder);
+                camera.setPreviewTexture(preview.getSurfaceTexture());
                 camera.setPreviewCallback(this);
 
                 Camera.Size previewSize = camera.getParameters().getPreviewSize();
@@ -785,12 +788,23 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
     }
 
     @Override
-    public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
+    public void onSurfaceTextureAvailable(SurfaceTexture surfaceTexture, int i, int i1) {
+        openCamera();
+    }
+
+    @Override
+    public void onSurfaceTextureSizeChanged(SurfaceTexture surfaceTexture, int i, int i1) {
 
     }
 
     @Override
-    public void surfaceDestroyed(SurfaceHolder holder) {
+    public boolean onSurfaceTextureDestroyed(SurfaceTexture surfaceTexture) {
+        deleteCamera();
+        return true;
+    }
+
+    @Override
+    public void onSurfaceTextureUpdated(SurfaceTexture surfaceTexture) {
 
     }
 
