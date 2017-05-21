@@ -618,8 +618,7 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
 
         textAuthor.setText(stateText);
         if (dontUseCamera) {
-            int iColor = (int) (lastLightSensorValue / SensorManager.LIGHT_OVERCAST * 256);
-            preview.setBackgroundColor(Color.argb(0, iColor, iColor, iColor));
+            preview.setAlpha(lastLightSensorValue / SensorManager.LIGHT_OVERCAST);
         }
 
         bar.setProgress(lastBrightnessValue);
