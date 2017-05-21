@@ -121,9 +121,9 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
 
     private void registerBroadcastReceiver() {
         try {
-            Log.i(this.EVENTS_NAME, "Register unlock receiver.");
+            Log.i(EVENTS_NAME, "Register unlock receiver.");
             final IntentFilter theFilter = new IntentFilter();
-            /** System Defined Broadcast */
+            /* System Defined Broadcast */
             theFilter.addAction(Intent.ACTION_SCREEN_ON);
             theFilter.addAction(Intent.ACTION_USER_PRESENT);
             UnlockReceiver mUnlockReceiver = new UnlockReceiver();
@@ -139,7 +139,7 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
                     PackageManager.DONT_KILL_APP);
 
         } catch (Exception e) {
-            Log.e(this.EVENTS_NAME, "Cannot register unlock receiver:" + e.toString());
+            Log.e(EVENTS_NAME, "Cannot register unlock receiver:" + e.toString());
         }
     }
 
@@ -164,9 +164,9 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
         Pattern intPattern = Pattern.compile("\\d+");
         if (fullIsoListString != null) {
             String[] fullIsoList = fullIsoListString.split(",");
-            for (int i = 0; i < fullIsoList.length; i++) {
-                String isoString = fullIsoList[i];
-                int currValue = 0;
+            for (String aFullIsoList : fullIsoList) {
+                String isoString = aFullIsoList;
+                int currValue;
                 if (isoString == null)
                     continue;
                 isoString = isoString.toLowerCase();
@@ -184,14 +184,14 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
                 currValue = Integer.parseInt(isoString);
                 if (minIso == 0) {
                     minIso = currValue;
-                    result = fullIsoList[i];
+                    result = aFullIsoList;
                 }
 
                 // compare with minimal
                 if (currValue != 0) {
                     if (minIso > currValue) {
                         minIso = currValue;
-                        result = fullIsoList[i];
+                        result = aFullIsoList;
                     }
                 }
             }
@@ -251,7 +251,7 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
      */
     private int getCameraId() {
         CameraInfo info = new CameraInfo();
-        int camera_id = -1;
+        int camera_id;
         usedBack = false;
         usedFront = false;
         if (!useBack) {
@@ -286,16 +286,18 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
                     params.set("iso", minimalIso);
                     camera.setParameters(params);
                 } catch (Exception e) {
-                    Log.e(this.EVENTS_NAME, "Cannot set camera iso value:" + e.toString());
+                    Log.e(EVENTS_NAME, "Cannot set camera iso value:" + e.toString());
                 }
             }
             int[] fpsValue = getMinimalFps(params);
             if (fpsValue != null) {
                 params.setPreviewFpsRange(fpsValue[0], fpsValue[1]);
             }
-            if (params.isAutoExposureLockSupported()) {
-                params.setAutoExposureLock(true);
-                params.setExposureCompensation(1);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
+                if (params.isAutoExposureLockSupported()) {
+                    params.setAutoExposureLock(true);
+                    params.setExposureCompensation(1);
+                }
             }
             Camera.Size previewSize = getMinimalPreviewSize(params);
             if (previewSize != null) {
@@ -314,11 +316,11 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
                 locationAltitude = (float) Math.round(location.getAltitude() * PRECISE) / PRECISE;
                 locationLongitude = (float) Math.round(location.getLongitude() * PRECISE) / PRECISE;
                 locationLatitude = (float) Math.round(location.getLatitude() * PRECISE) / PRECISE;
-                Log.i(this.EVENTS_NAME, String.format(getString(R.string.LatString), locationLatitude));
-                Log.i(this.EVENTS_NAME, String.format(getString(R.string.LongString), locationLongitude));
-                Log.i(this.EVENTS_NAME, String.format(getString(R.string.AltString), locationAltitude));
+                Log.i(EVENTS_NAME, String.format(getString(R.string.LatString), locationLatitude));
+                Log.i(EVENTS_NAME, String.format(getString(R.string.LongString), locationLongitude));
+                Log.i(EVENTS_NAME, String.format(getString(R.string.AltString), locationAltitude));
             } catch (Exception e) {
-                Log.e(this.EVENTS_NAME, "Issue with location:" + e.toString());
+                Log.e(EVENTS_NAME, "Issue with location:" + e.toString());
             }
         }
         generateLocationString();
@@ -362,12 +364,12 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
     @Override
     protected void onResume() {
         super.onResume();
-        SharedPreferences prefs = getSharedPreferences(this.PREFERENCES_NAME, MODE_PRIVATE);
-        useFootCandle = prefs.getBoolean(this.USE_FOOT_CANDLE_FOR_SHOW, false);
-        minPercentValueSettings = prefs.getInt(this.MIN_PERCENT_VALUE, 0);
-        maxPercentValueSettings = prefs.getInt(this.MAX_PERCENT_VALUE, 100);
-        cannotChangeBrightness = prefs.getBoolean(this.DISABLE_CHANGE_BRIGHTNESS, false);
-        dontUseCamera = prefs.getBoolean(this.DISABLE_CAMERA, false);
+        SharedPreferences prefs = getSharedPreferences(PREFERENCES_NAME, MODE_PRIVATE);
+        useFootCandle = prefs.getBoolean(USE_FOOT_CANDLE_FOR_SHOW, false);
+        minPercentValueSettings = prefs.getInt(MIN_PERCENT_VALUE, 0);
+        maxPercentValueSettings = prefs.getInt(MAX_PERCENT_VALUE, 100);
+        cannotChangeBrightness = prefs.getBoolean(DISABLE_CHANGE_BRIGHTNESS, false);
+        dontUseCamera = prefs.getBoolean(DISABLE_CAMERA, false);
         if (!cannotChangeBrightness || !dontUseCamera) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 if (!dontUseCamera)
@@ -392,12 +394,15 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
                 }
             }
         }
-        useBack = prefs.getBoolean(this.USE_BACK_CAMERA, false);
+        useBack = prefs.getBoolean(USE_BACK_CAMERA, false);
+        if (!dontUseCamera) {
+            this.initCamera();
+        }
         lastCameraSensorValue = 0;
         lastLightSensorValue = 0;
         this.initLightSensor();
 
-        useSunFix = prefs.getBoolean(this.AUTO_SUN_VALUE, false);
+        useSunFix = prefs.getBoolean(AUTO_SUN_VALUE, false);
         if (useSunFix) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 if (checkSelfPermission(android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
@@ -478,14 +483,14 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
     }
 
     private void savePreferences(long newTimeValue) {
-        SharedPreferences prefs = getSharedPreferences(this.PREFERENCES_NAME, Context.MODE_PRIVATE);
+        SharedPreferences prefs = getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE);
         SharedPreferences.Editor edit = prefs.edit();
-        edit.putInt(this.MAGNITUDE_VALUE, this.lastMagnitudeValue);
-        edit.putFloat(this.ALTITUDE_VALUE, this.locationAltitude);
-        edit.putFloat(this.LATITUDE_VALUE, this.locationLatitude);
-        edit.putFloat(this.LONGITUDE_VALUE, this.locationLongitude);
+        edit.putInt(MAGNITUDE_VALUE, this.lastMagnitudeValue);
+        edit.putFloat(ALTITUDE_VALUE, this.locationAltitude);
+        edit.putFloat(LATITUDE_VALUE, this.locationLatitude);
+        edit.putFloat(LONGITUDE_VALUE, this.locationLongitude);
         if (newTimeValue > 0) {
-            edit.putLong(this.RUNTIME_VALUE, newTimeValue);
+            edit.putLong(RUNTIME_VALUE, newTimeValue);
         }
         edit.apply();
     }
@@ -660,22 +665,22 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
         registerBroadcastReceiver();
 
         this.startTime = new Date();
-        SharedPreferences prefs = getSharedPreferences(this.PREFERENCES_NAME, MODE_PRIVATE);
-        lastMagnitudeSensorValue = prefs.getInt(this.MAGNITUDE_SENSOR_VALUE, 10);
-        minPercentValueSettings = prefs.getInt(this.MIN_PERCENT_VALUE, 0);
-        maxPercentValueSettings = prefs.getInt(this.MAX_PERCENT_VALUE, 100);
+        SharedPreferences prefs = getSharedPreferences(PREFERENCES_NAME, MODE_PRIVATE);
+        lastMagnitudeSensorValue = prefs.getInt(MAGNITUDE_SENSOR_VALUE, 10);
+        minPercentValueSettings = prefs.getInt(MIN_PERCENT_VALUE, 0);
+        maxPercentValueSettings = prefs.getInt(MAX_PERCENT_VALUE, 100);
         if (savedInstanceState != null) {
-            lastMagnitudeValue = savedInstanceState.getInt(this.MAGNITUDE_VALUE, 10);
-            locationLatitude = savedInstanceState.getFloat(this.LATITUDE_VALUE, 0);
-            locationLongitude = savedInstanceState.getFloat(this.LONGITUDE_VALUE, 0);
-            locationAltitude = savedInstanceState.getFloat(this.ALTITUDE_VALUE, 0);
-            this.lastTime = savedInstanceState.getLong(this.RUNTIME_VALUE, 0);
+            lastMagnitudeValue = savedInstanceState.getInt(MAGNITUDE_VALUE, 10);
+            locationLatitude = savedInstanceState.getFloat(LATITUDE_VALUE, 0);
+            locationLongitude = savedInstanceState.getFloat(LONGITUDE_VALUE, 0);
+            locationAltitude = savedInstanceState.getFloat(ALTITUDE_VALUE, 0);
+            this.lastTime = savedInstanceState.getLong(RUNTIME_VALUE, 0);
         } else {
-            lastMagnitudeValue = prefs.getInt(this.MAGNITUDE_VALUE, 10);
-            locationAltitude = prefs.getFloat(this.ALTITUDE_VALUE, 0);
-            locationLongitude = prefs.getFloat(this.LONGITUDE_VALUE, 0);
-            locationLatitude = prefs.getFloat(this.LATITUDE_VALUE, 0);
-            this.lastTime = prefs.getLong(this.RUNTIME_VALUE, 0);
+            lastMagnitudeValue = prefs.getInt(MAGNITUDE_VALUE, 10);
+            locationAltitude = prefs.getFloat(ALTITUDE_VALUE, 0);
+            locationLongitude = prefs.getFloat(LONGITUDE_VALUE, 0);
+            locationLatitude = prefs.getFloat(LATITUDE_VALUE, 0);
+            this.lastTime = prefs.getLong(RUNTIME_VALUE, 0);
         }
         this.generateLocationString();
         magnitude_seek.setMax(40);
@@ -734,11 +739,11 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
         Date current = new Date();
         long newTimeValue = this.lastTime + (current.getTime() - this.startTime.getTime()) / 1000;
         super.onSaveInstanceState(outState);
-        outState.putInt(this.MAGNITUDE_VALUE, this.lastMagnitudeValue);
-        outState.putLong(this.RUNTIME_VALUE, newTimeValue);
-        outState.putFloat(this.ALTITUDE_VALUE, locationAltitude);
-        outState.putFloat(this.LATITUDE_VALUE, locationLatitude);
-        outState.putFloat(this.LONGITUDE_VALUE, locationLongitude);
+        outState.putInt(MAGNITUDE_VALUE, this.lastMagnitudeValue);
+        outState.putLong(RUNTIME_VALUE, newTimeValue);
+        outState.putFloat(ALTITUDE_VALUE, locationAltitude);
+        outState.putFloat(LATITUDE_VALUE, locationLatitude);
+        outState.putFloat(LONGITUDE_VALUE, locationLongitude);
         super.onSaveInstanceState(outState);
     }
 
@@ -781,7 +786,7 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
                 preview.setLayoutParams(lp);
                 camera.startPreview();
             } catch (IOException e) {
-                Log.e(this.EVENTS_NAME, "Cannot access system brightness:" + e.toString());
+                Log.e(EVENTS_NAME, "Cannot access system brightness:" + e.toString());
             }
         }
     }
@@ -839,7 +844,7 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
                 Settings.System.putInt(getContentResolver(), Settings.System.SCREEN_BRIGHTNESS, lastBrightnessValue);
             } catch (Exception e) {
                 //Throw an error case it couldn't be retrieved
-                Log.e(this.EVENTS_NAME, "Cannot access system brightness:" + e.toString());
+                Log.e(EVENTS_NAME, "Cannot access system brightness:" + e.toString());
             }
         }
     }
@@ -851,12 +856,12 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
             if (lastUpdateTimeMillisecondsStamp == currMillis)
                 return;
             lastUpdateTimeMillisecondsStamp = currMillis;
-            lastCameraSensorValue = this.getMiddleIntense(data, cameraPreviewSize.width,
+            lastCameraSensorValue = getMiddleIntense(data, cameraPreviewSize.width,
                     cameraPreviewSize.height, (int) (lastUpdateTimeMillisecondsStamp % 16), 16);
             this.updateBrightness();
             this.updateShowedValues();
         } catch (Exception e) {
-            Log.e(this.EVENTS_NAME, "Issue with camera preview:" + e.toString());
+            Log.e(EVENTS_NAME, "Issue with camera preview:" + e.toString());
             Camera.Parameters params = camera.getParameters();
             cameraPreviewSize = params.getPreviewSize();
         }
