@@ -22,6 +22,47 @@
             android:weightSum="1">
 
             <TextView
+                android:id="@+id/textMagnitudeSensorTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentRight="false"
+                android:layout_alignParentStart="true"
+                android:layout_alignParentTop="true"
+                android:text="@string/magnitudeSensorTitle" />
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+
+            <SeekBar
+                android:id="@+id/sensorMagnitudeValue"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentStart="true"
+                android:layout_toLeftOf="@+id/textSensorMagnitude"
+                android:layout_toStartOf="@+id/textSensorMagnitude" />
+
+            <TextView
+                android:id="@+id/textSensorMagnitude"
+                android:layout_width="40dp"
+                android:layout_height="wrap_content"
+                android:layout_alignParentEnd="true"
+                android:layout_alignParentRight="true"
+                android:gravity="center_vertical|center_horizontal"
+                android:text="@string/magnitude_value" />
+
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:weightSum="1">
+
+            <TextView
                 android:id="@+id/textMinPercentTitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -93,7 +134,48 @@
                 android:layout_alignParentEnd="true"
                 android:layout_alignParentRight="true"
                 android:gravity="center_vertical|center_horizontal"
-                android:text="@string/max_percent_value" />
+                android:text="@string/percent_value" />
+
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:weightSum="1">
+
+            <TextView
+                android:id="@+id/textBatteryMaxPercentTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentRight="false"
+                android:layout_alignParentStart="true"
+                android:layout_alignParentTop="true"
+                android:text="@string/maxBatteryPercentTitle" />
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+
+            <SeekBar
+                android:id="@+id/percentBatteryMaxValue"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentStart="true"
+                android:layout_toLeftOf="@+id/textBatteryMaxPercent"
+                android:layout_toStartOf="@+id/textBatteryMaxPercent" />
+
+            <TextView
+                android:id="@+id/textBatteryMaxPercent"
+                android:layout_width="40dp"
+                android:layout_height="wrap_content"
+                android:layout_alignParentEnd="true"
+                android:layout_alignParentRight="true"
+                android:gravity="center_vertical|center_horizontal"
+                android:text="@string/percent_value" />
 
         </RelativeLayout>
 
@@ -138,46 +220,5 @@
             android:layout_height="wrap_content"
             android:checked="false"
             android:text="@string/use_foot_candle" />
-
-        <RelativeLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:weightSum="1">
-
-            <TextView
-                android:id="@+id/textMagnitudeSensorTitle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_alignParentLeft="true"
-                android:layout_alignParentRight="false"
-                android:layout_alignParentStart="true"
-                android:layout_alignParentTop="true"
-                android:text="@string/magnitudeSensorTitle" />
-        </RelativeLayout>
-
-        <RelativeLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content">
-
-            <SeekBar
-                android:id="@+id/sensorMagnitudeValue"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_alignParentLeft="true"
-                android:layout_alignParentStart="true"
-                android:layout_toLeftOf="@+id/textSensorMagnitude"
-                android:layout_toStartOf="@+id/textSensorMagnitude" />
-
-            <TextView
-                android:id="@+id/textSensorMagnitude"
-                android:layout_width="40dp"
-                android:layout_height="wrap_content"
-                android:layout_alignParentEnd="true"
-                android:layout_alignParentRight="true"
-                android:gravity="center_vertical|center_horizontal"
-                android:text="@string/magnitudeSensor" />
-
-        </RelativeLayout>
     </LinearLayout>
 </ScrollView>

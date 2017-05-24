@@ -115,9 +115,31 @@ public class UnlockReceiver extends BroadcastReceiver {
             Log.i(EVENTS_NAME, "Service disabled.");
             return;
         }
+
+        // check battery status
+        if (intent.getAction() == Intent.ACTION_BATTERY_LOW) {
+            SharedPreferences.Editor edit = prefs.edit();
+            edit.putBoolean(MainActivity.BATTERY_LOW, true);
+            edit.apply();
+        } else if (intent.getAction() == Intent.ACTION_BATTERY_OKAY) {
+            SharedPreferences.Editor edit = prefs.edit();
+            edit.putBoolean(MainActivity.BATTERY_LOW, false);
+            edit.apply();
+        }
+
         Calendar curCalendar = Calendar.getInstance();
         float minPercentValue = prefs.getInt(MainActivity.MIN_PERCENT_VALUE, 0);
         float maxPercentValue = prefs.getInt(MainActivity.MAX_PERCENT_VALUE, 100);
+
+        if (prefs.getBoolean(MainActivity.BATTERY_LOW, false)) {
+            Log.i(EVENTS_NAME, "Battery low.");
+            // limit battery
+            float maxBatteryPercentValue = prefs.getInt(MainActivity.MAX_BATTERY_PERCENT_VALUE, 100);
+            if (maxBatteryPercentValue < maxPercentValue) {
+                maxPercentValue = maxBatteryPercentValue;
+            }
+        }
+
         double auto_value = 255;
         double sun_value = 255;
         double curr_time_hour = curCalendar.get(Calendar.HOUR_OF_DAY) + (float) curCalendar.get(Calendar.MINUTE) / 60;

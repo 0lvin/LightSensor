@@ -33,4 +33,6 @@
     <string name="use_foot_candle">Używać foot candle.</string>
     <string name="maxPercentTitle">Maksymalna wartość jasności.</string>
     <string name="magnitudeSensorTitle">Zwiększ wartość dla czujnika światła</string>
+    <string name="maxBatteryPercentTitle">Maksymalna jasność przy niskiej baterii.</string>
+    <string name="low_battery">Niski poziom naładowania baterii:</string>
 </resources>

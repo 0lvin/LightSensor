@@ -33,4 +33,6 @@
     <string name="use_foot_candle">Використовувати foot candle.</string>
     <string name="maxPercentTitle">Максимальне значення яскравості.</string>
     <string name="magnitudeSensorTitle">Збільшити значення для датчика світла в</string>
+    <string name="maxBatteryPercentTitle">Максимальне значення яскравості на низькому рівні заряду батареї.</string>
+    <string name="low_battery">Низький рівень заряду батареї:</string>
 </resources>
