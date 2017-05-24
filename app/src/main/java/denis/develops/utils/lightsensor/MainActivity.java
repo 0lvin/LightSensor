@@ -9,7 +9,6 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
-import android.graphics.Color;
 import android.graphics.ImageFormat;
 import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
@@ -47,6 +46,8 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
     final static String MAGNITUDE_SENSOR_VALUE = "MagnitudeSensorValue";
     final static String MIN_PERCENT_VALUE = "PercentValue";
     final static String MAX_PERCENT_VALUE = "MaxPercentValue";
+    final static String MAX_BATTERY_PERCENT_VALUE = "MaxBatteryPercentValue";
+    final static String BATTERY_LOW = "BatteryLowUsed";
     final static String RUNTIME_VALUE = "LastRunTime";
     final static String EVENTS_NAME = "LightsSensors";
     final static String AUTO_VALUE = "AutoUpdateOnEvent";
@@ -88,6 +89,7 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
     private boolean cannotChangeBrightness = false;
     private boolean dontUseCamera = false;
     private boolean useFootCandle = false;
+    private boolean low_battery = false;
     private TextView textCameraLight;
     private TextView textMagnitude;
     private Date startTime;
@@ -368,8 +370,15 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
         useFootCandle = prefs.getBoolean(USE_FOOT_CANDLE_FOR_SHOW, false);
         minPercentValueSettings = prefs.getInt(MIN_PERCENT_VALUE, 0);
         maxPercentValueSettings = prefs.getInt(MAX_PERCENT_VALUE, 100);
+        if (prefs.getBoolean(BATTERY_LOW, false)) {
+            int maxBatteryPercentValue = prefs.getInt(MainActivity.MAX_BATTERY_PERCENT_VALUE, 100);
+            if (maxBatteryPercentValue < maxPercentValueSettings) {
+                maxPercentValueSettings = maxBatteryPercentValue;
+            }
+        }
         cannotChangeBrightness = prefs.getBoolean(DISABLE_CHANGE_BRIGHTNESS, false);
         dontUseCamera = prefs.getBoolean(DISABLE_CAMERA, false);
+        low_battery = prefs.getBoolean(BATTERY_LOW, false);
         if (!cannotChangeBrightness || !dontUseCamera) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 if (!dontUseCamera)
@@ -620,6 +629,7 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
         stateText += Long.toString(usedMinutes) + " " + getString(R.string.minutes) + " ";
         stateText += Long.toString(usedSeconds) + " " + getString(R.string.seconds) + ".\n";
         stateText += this.locationString;
+        stateText += getString(R.string.low_battery) + " " + Boolean.toString(this.low_battery);
 
         textAuthor.setText(stateText);
         if (dontUseCamera) {
@@ -669,6 +679,12 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
         lastMagnitudeSensorValue = prefs.getInt(MAGNITUDE_SENSOR_VALUE, 10);
         minPercentValueSettings = prefs.getInt(MIN_PERCENT_VALUE, 0);
         maxPercentValueSettings = prefs.getInt(MAX_PERCENT_VALUE, 100);
+        if (prefs.getBoolean(BATTERY_LOW, false)) {
+            int maxBatteryPercentValue = prefs.getInt(MainActivity.MAX_BATTERY_PERCENT_VALUE, 100);
+            if (maxBatteryPercentValue < maxPercentValueSettings) {
+                maxPercentValueSettings = maxBatteryPercentValue;
+            }
+        }
         if (savedInstanceState != null) {
             lastMagnitudeValue = savedInstanceState.getInt(MAGNITUDE_VALUE, 10);
             locationLatitude = savedInstanceState.getFloat(LATITUDE_VALUE, 0);

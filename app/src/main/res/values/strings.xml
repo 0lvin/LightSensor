@@ -34,7 +34,7 @@
     <string name="used_lux">Used values in lux(0.0929 foot candle).</string>
     <string name="used_foot_candle">Show foot candle values.</string>
     <string name="maxPercentTitle">Maximum brightness value.</string>
-    <string name="max_percent_value" translatable="false">100%</string>
     <string name="magnitudeSensorTitle">Magnitude value for hardware lightsensor.</string>
-    <string name="magnitudeSensor" translatable="false">1.0x</string>
+    <string name="maxBatteryPercentTitle">Maximum brightness value on low battery.</string>
+    <string name="low_battery">Low battery level:</string>
 </resources>

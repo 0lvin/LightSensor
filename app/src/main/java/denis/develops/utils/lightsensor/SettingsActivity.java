@@ -12,6 +12,7 @@ import android.widget.TextView;
 public class SettingsActivity extends Activity {
     private TextView minTextPercent;
     private TextView maxTextPercent;
+    private TextView maxBatteryTextPercent;
     private TextView sensorTextPercent;
     private Switch registerSwitch;
     private Switch registerSunSwitch;
@@ -22,8 +23,10 @@ public class SettingsActivity extends Activity {
     private int lastMagnitudeSensorValue = 10;
     private int minLastPercentValue = 0;
     private int maxLastPercentValue = 100;
+    private int maxBatteryLastPercentValue = 100;
     private SeekBar minPercentSeek;
     private SeekBar maxPercentSeek;
+    private SeekBar maxBatteryPercentSeek;
     private SeekBar magnitudeSensorSeek;
     private boolean serviceEnabled = false;
     private boolean useBack = false;
@@ -35,6 +38,7 @@ public class SettingsActivity extends Activity {
     private void updateTextValues() {
         minTextPercent.setText(Integer.toString(minLastPercentValue) + "%");
         maxTextPercent.setText(Integer.toString(maxLastPercentValue) + "%");
+        maxBatteryTextPercent.setText(Integer.toString(maxBatteryLastPercentValue) + "%");
         sensorTextPercent.setText(Float.toString((((float) lastMagnitudeSensorValue + 10) / 20)) + "x");
     }
 
@@ -45,9 +49,11 @@ public class SettingsActivity extends Activity {
         sensorTextPercent = (TextView) findViewById(R.id.textSensorMagnitude);
         minTextPercent = (TextView) findViewById(R.id.textPercent);
         maxTextPercent = (TextView) findViewById(R.id.textMaxPercent);
+        maxBatteryTextPercent = (TextView) findViewById(R.id.textBatteryMaxPercent);
         magnitudeSensorSeek = (SeekBar) findViewById(R.id.sensorMagnitudeValue);
         minPercentSeek = (SeekBar) findViewById(R.id.percentValue);
         maxPercentSeek = (SeekBar) findViewById(R.id.percentMaxValue);
+        maxBatteryPercentSeek = (SeekBar) findViewById(R.id.percentBatteryMaxValue);
         registerSwitch = (Switch) findViewById(R.id.switchAuto);
         registerSunSwitch = (Switch) findViewById(R.id.switchAutoSun);
 
@@ -60,6 +66,7 @@ public class SettingsActivity extends Activity {
         SharedPreferences prefs = getSharedPreferences(MainActivity.PREFERENCES_NAME, MODE_PRIVATE);
         minLastPercentValue = prefs.getInt(MainActivity.MIN_PERCENT_VALUE, 0);
         maxLastPercentValue = prefs.getInt(MainActivity.MAX_PERCENT_VALUE, 100);
+        maxBatteryLastPercentValue = prefs.getInt(MainActivity.MAX_BATTERY_PERCENT_VALUE, 100);
         lastMagnitudeSensorValue = prefs.getInt(MainActivity.MAGNITUDE_SENSOR_VALUE, 10);
         updateTextValues();
 
@@ -127,6 +134,26 @@ public class SettingsActivity extends Activity {
             }
         });
 
+        maxBatteryPercentSeek.setMax(100);
+        maxBatteryPercentSeek.setProgress(Math.max(maxBatteryLastPercentValue, 0));
+        maxBatteryPercentSeek.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int position, boolean b) {
+                maxBatteryLastPercentValue = position;
+                savePreferences();
+                updateTextValues();
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
+            }
+        });
 
         useFootCandleSwitch.setChecked(prefs.getBoolean(MainActivity.USE_FOOT_CANDLE_FOR_SHOW, false));
         useFootCandleSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
@@ -197,6 +224,7 @@ public class SettingsActivity extends Activity {
         edit.putBoolean(MainActivity.USE_FOOT_CANDLE_FOR_SHOW, useFootCandle);
         edit.putInt(MainActivity.MIN_PERCENT_VALUE, this.minLastPercentValue);
         edit.putInt(MainActivity.MAX_PERCENT_VALUE, this.maxLastPercentValue);
+        edit.putInt(MainActivity.MAX_BATTERY_PERCENT_VALUE, this.maxBatteryLastPercentValue);
         edit.putBoolean(MainActivity.DISABLE_CHANGE_BRIGHTNESS, cannotChangeBrightness);
         edit.putBoolean(MainActivity.USE_BACK_CAMERA, useBack);
         edit.putBoolean(MainActivity.USE_FOOT_CANDLE_FOR_SHOW, useFootCandle);
