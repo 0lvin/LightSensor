@@ -6,10 +6,10 @@ android {
 
     defaultConfig {
         applicationId "denis.develops.utils.lightsensor"
-        minSdkVersion 9
+        minSdkVersion 1
         targetSdkVersion 25
-        versionCode 13
-        versionName "0.0.13"
+        versionCode 15
+        versionName "0.0.14"
     }
     buildTypes {
         release {

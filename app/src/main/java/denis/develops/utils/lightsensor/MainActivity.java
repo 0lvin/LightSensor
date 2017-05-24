@@ -1,5 +1,6 @@
 package denis.develops.utils.lightsensor;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.ComponentName;
 import android.content.ContentResolver;
@@ -9,6 +10,7 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.graphics.Color;
 import android.graphics.ImageFormat;
 import android.hardware.Camera;
 import android.hardware.Camera.CameraInfo;
@@ -128,7 +130,9 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
             final IntentFilter theFilter = new IntentFilter();
             /* System Defined Broadcast */
             theFilter.addAction(Intent.ACTION_SCREEN_ON);
-            theFilter.addAction(Intent.ACTION_USER_PRESENT);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.CUPCAKE) {
+                theFilter.addAction(Intent.ACTION_USER_PRESENT);
+            }
             UnlockReceiver mUnlockReceiver = new UnlockReceiver();
 
             getApplicationContext().registerReceiver(mUnlockReceiver, theFilter);
@@ -147,7 +151,11 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
     }
 
     private int[] getMinimalFps(Camera.Parameters params) {
-        List<int[]> fpsValue = params.getSupportedPreviewFpsRange();
+        List<int[]> fpsValue;
+        if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.GINGERBREAD) {
+            return null;
+        }
+        fpsValue = params.getSupportedPreviewFpsRange();
 
         int minFps = 0;
         int pos = 0;
@@ -207,6 +215,9 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
     }
 
     private Camera.Size getMinimalPreviewSize(Camera.Parameters params) {
+        if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.ECLAIR) {
+            return null;
+        }
         int minWidth = -1;
         List<Camera.Size> sizes = params.getSupportedPreviewSizes();
         for (int i = 0; i < sizes.size(); i++) {
@@ -227,6 +238,9 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
     }
 
     private int getFrontCameraId(CameraInfo info) {
+        if (android.os.Build.VERSION.SDK_INT < Build.VERSION_CODES.GINGERBREAD) {
+            return -1;
+        }
         //search front camera
         for (int i = 0; i < Camera.getNumberOfCameras(); i++) {
             Camera.getCameraInfo(i, info);
@@ -239,6 +253,9 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
     }
 
     private int getBackCameraId(CameraInfo info) {
+        if (android.os.Build.VERSION.SDK_INT < Build.VERSION_CODES.GINGERBREAD) {
+            return -1;
+        }
         for (int i = 0; i < Camera.getNumberOfCameras(); i++) {
             Camera.getCameraInfo(i, info);
             if (info.facing == CameraInfo.CAMERA_FACING_BACK) {
@@ -253,6 +270,9 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
         returned camera, front camera preferred
      */
     private int getCameraId() {
+        if (android.os.Build.VERSION.SDK_INT < Build.VERSION_CODES.GINGERBREAD) {
+            return -1;
+        }
         CameraInfo info = new CameraInfo();
         int camera_id;
         usedBack = false;
@@ -278,7 +298,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
             return;
 
         int cameraId = this.getCameraId();
-        if (cameraId != -1) {
+        if (cameraId != -1 && Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
             camera = Camera.open(cameraId);
             Camera.Parameters params = camera.getParameters();
             params.setColorEffect(Camera.Parameters.EFFECT_MONO);
@@ -442,7 +462,9 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
                     SharedPreferences prefs = getSharedPreferences(MainActivity.PREFERENCES_NAME, Context.MODE_PRIVATE);
                     SharedPreferences.Editor edit = prefs.edit();
                     edit.putBoolean(MainActivity.AUTO_SUN_VALUE, false);
-                    edit.apply();
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
+                        edit.apply();
+                    }
                 }
                 break;
             }
@@ -456,7 +478,9 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
                     SharedPreferences prefs = getSharedPreferences(MainActivity.PREFERENCES_NAME, Context.MODE_PRIVATE);
                     SharedPreferences.Editor edit = prefs.edit();
                     edit.putBoolean(MainActivity.DISABLE_CAMERA, true);
-                    edit.apply();
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
+                        edit.apply();
+                    }
                 }
                 break;
             }
@@ -474,7 +498,9 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
                         SharedPreferences prefs = getSharedPreferences(MainActivity.PREFERENCES_NAME, Context.MODE_PRIVATE);
                         SharedPreferences.Editor edit = prefs.edit();
                         edit.putBoolean(MainActivity.DISABLE_CHANGE_BRIGHTNESS, true);
-                        edit.apply();
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
+                            edit.apply();
+                        }
                     }
                 }
                 break;
@@ -502,7 +528,9 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
         if (newTimeValue > 0) {
             edit.putLong(RUNTIME_VALUE, newTimeValue);
         }
-        edit.apply();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
+            edit.apply();
+        }
     }
 
     @Override
@@ -512,12 +540,14 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
         super.onPause();
         deleteCamera();
         if (lightsSensorListener != null && sensorManager != null) {
-            sensorManager.unregisterListener(lightsSensorListener);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.CUPCAKE) {
+                sensorManager.unregisterListener(lightsSensorListener);
+            }
         }
         lightsSensorListener = null;
         sensorManager = null;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (checkSelfPermission(android.Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            if (checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
                 if (locationListener != null) {
                     // init location receiver
                     // Acquire a reference to the system Location Manager
@@ -643,18 +673,21 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
     }
 
     private void initLightSensor() {
-        // Obtain references to the SensorManager and the Light Sensor
-        sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
-        List<Sensor> sensors = sensorManager.getSensorList(Sensor.TYPE_LIGHT);
-        if (sensors.size() > 0) {
-            usedLightSensor = true;
-            final Sensor lightSensor = sensorManager.getDefaultSensor(Sensor.TYPE_LIGHT);
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.CUPCAKE) {
 
-            if (lightsSensorListener != null && sensorManager != null) {
-                sensorManager.registerListener(
-                        lightsSensorListener, lightSensor, SensorManager.SENSOR_DELAY_NORMAL);
+            // Obtain references to the SensorManager and the Light Sensor
+            sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
+            List<Sensor> sensors = sensorManager.getSensorList(Sensor.TYPE_LIGHT);
+            if (sensors.size() > 0) {
+                usedLightSensor = true;
+                final Sensor lightSensor;
+                lightSensor = sensorManager.getDefaultSensor(Sensor.TYPE_LIGHT);
+
+                if (lightsSensorListener != null && sensorManager != null) {
+                    sensorManager.registerListener(
+                            lightsSensorListener, lightSensor, SensorManager.SENSOR_DELAY_NORMAL);
+                }
             }
-
         }
     }
 
@@ -730,19 +763,23 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
         this.updateShowedValues();
 
         // Implement a listener to receive updates
-        lightsSensorListener = new SensorEventListener() {
-            @Override
-            public void onSensorChanged(SensorEvent event) {
-                lastLightSensorValue = event.values[0] * getSensorMagnitude();
-                updateShowedValues();
-                updateBrightness();
-            }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.CUPCAKE) {
+            lightsSensorListener = new SensorEventListener() {
+                @Override
+                public void onSensorChanged(SensorEvent event) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.CUPCAKE) {
+                        lastLightSensorValue = event.values[0] * getSensorMagnitude();
+                        updateShowedValues();
+                        updateBrightness();
+                    }
+                }
 
-            @Override
-            public void onAccuracyChanged(Sensor sensor, int accuracy) {
+                @Override
+                public void onAccuracyChanged(Sensor sensor, int accuracy) {
 
-            }
-        };
+                }
+            };
+        }
 
     }
 
@@ -783,13 +820,17 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
                 // fix orientation
                 if (this.getResources().getConfiguration().orientation != Configuration.ORIENTATION_LANDSCAPE) {
                     // portrait
-                    camera.setDisplayOrientation(90);
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.FROYO) {
+                        camera.setDisplayOrientation(90);
+                    }
                     lp.height = previewSurfaceHeight;
                     lp.width = (int) (previewSurfaceHeight / aspect);
 
                 } else {
                     // landscape
-                    camera.setDisplayOrientation(0);
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.FROYO) {
+                        camera.setDisplayOrientation(0);
+                    }
                     lp.width = previewSurfaceWidth;
                     lp.height = (int) (previewSurfaceWidth / aspect);
                 }

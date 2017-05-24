@@ -4,10 +4,12 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.Build;
 import android.provider.Settings;
 import android.util.Log;
 
 import java.util.Calendar;
+import java.util.Objects;
 
 public class UnlockReceiver extends BroadcastReceiver {
     final String EVENTS_NAME = "LightsSensors.receiver";
@@ -117,14 +119,18 @@ public class UnlockReceiver extends BroadcastReceiver {
         }
 
         // check battery status
-        if (intent.getAction() == Intent.ACTION_BATTERY_LOW) {
+        if (Intent.ACTION_BATTERY_LOW.equals(intent.getAction())) {
             SharedPreferences.Editor edit = prefs.edit();
             edit.putBoolean(MainActivity.BATTERY_LOW, true);
-            edit.apply();
-        } else if (intent.getAction() == Intent.ACTION_BATTERY_OKAY) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
+                edit.apply();
+            }
+        } else if (Intent.ACTION_BATTERY_OKAY.equals(intent.getAction())) {
             SharedPreferences.Editor edit = prefs.edit();
             edit.putBoolean(MainActivity.BATTERY_LOW, false);
-            edit.apply();
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
+                edit.apply();
+            }
         }
 
         Calendar curCalendar = Calendar.getInstance();
@@ -154,8 +160,8 @@ public class UnlockReceiver extends BroadcastReceiver {
             double locationLongitude = prefs.getFloat(MainActivity.LONGITUDE_VALUE, 0);
             double locationLatitude = prefs.getFloat(MainActivity.LATITUDE_VALUE, 0);
 
-            double sunrise = this.getSunsetTime(true, locationLongitude, locationLatitude);
-            double sunset = this.getSunsetTime(false, locationLongitude, locationLatitude);
+            double sunrise = getSunsetTime(true, locationLongitude, locationLatitude);
+            double sunset = getSunsetTime(false, locationLongitude, locationLatitude);
             if (sunrise < 0 || sunset > 24) {
                 // nothing to do with it
                 sun_change = false;
