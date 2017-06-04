@@ -125,7 +125,8 @@ public class UnlockReceiver extends BroadcastReceiver {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
                 edit.apply();
             }
-        } else if (Intent.ACTION_BATTERY_OKAY.equals(intent.getAction())) {
+        } else if (Intent.ACTION_BATTERY_OKAY.equals(intent.getAction()) ||
+                Intent.ACTION_POWER_CONNECTED.equals(intent.getAction())) {
             SharedPreferences.Editor edit = prefs.edit();
             edit.putBoolean(MainActivity.BATTERY_LOW, false);
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {

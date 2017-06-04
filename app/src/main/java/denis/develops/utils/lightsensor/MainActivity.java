@@ -868,12 +868,22 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
     @Override
     public void onPreviewFrame(byte[] data, Camera camera) {
         try {
-            long currMillis = System.currentTimeMillis() / 256; // ~ 4fps
+            /*
+                1 ~ 8 fps
+                2 ~ 4 fps
+                3 ~ 2 fps
+                4 ~ 1 fps
+                5 ~ 0.5 fps
+                6 ~ 0.25 fps (once in 4 seconds)
+             */
+            long sub_step = 2;
+            int step_skip_dots = 1 << (2 + sub_step);
+            long currMillis = System.currentTimeMillis() >> (6 + sub_step);
             if (lastUpdateTimeMillisecondsStamp == currMillis)
                 return;
             lastUpdateTimeMillisecondsStamp = currMillis;
             lastCameraSensorValue = getMiddleIntense(data, cameraPreviewSize.width,
-                    cameraPreviewSize.height, (int) (lastUpdateTimeMillisecondsStamp % 16), 16);
+                    cameraPreviewSize.height, (int) (lastUpdateTimeMillisecondsStamp % step_skip_dots), step_skip_dots);
             this.updateBrightness();
             this.updateShowedValues();
         } catch (Exception e) {
