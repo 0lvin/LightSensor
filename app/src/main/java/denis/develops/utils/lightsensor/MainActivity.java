@@ -869,16 +869,16 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
     public void onPreviewFrame(byte[] data, Camera camera) {
         try {
             /*
-                1 ~ 8 fps
-                2 ~ 4 fps
-                3 ~ 2 fps
-                4 ~ 1 fps
-                5 ~ 0.5 fps
-                6 ~ 0.25 fps (once in 4 seconds)
+                3 ~ 8 fps
+                4 ~ 4 fps
+                5 ~ 2 fps
+                6 ~ 1 fps
+                7 ~ 0.5 fps
+                8 ~ 0.25 fps (once in 4 seconds)
              */
-            long sub_step = 2;
-            int step_skip_dots = 1 << (2 + sub_step);
-            long currMillis = System.currentTimeMillis() >> (6 + sub_step);
+            long sub_step = 1;
+            int step_skip_dots = 1 << sub_step;
+            long currMillis = System.currentTimeMillis() >> (4 + sub_step);
             if (lastUpdateTimeMillisecondsStamp == currMillis)
                 return;
             lastUpdateTimeMillisecondsStamp = currMillis;
