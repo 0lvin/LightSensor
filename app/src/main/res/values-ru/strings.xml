@@ -35,4 +35,5 @@
     <string name="magnitudeSensorTitle">Увеличить значение для датчика света в</string>
     <string name="maxBatteryPercentTitle">Максимальное значение яркости при разряженной батарее.</string>
     <string name="low_battery">Низкий уровень заряда батареи:</string>
+    <string name="updateFrequencyTitle">Частота обновления яркости.</string>
 </resources>

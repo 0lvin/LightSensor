@@ -59,6 +59,7 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
     final static String ALTITUDE_VALUE = "AltitudeValue";
     final static String LONGITUDE_VALUE = "LongitudeValue";
     final static String LATITUDE_VALUE = "LatitudeValue";
+    final static String FREQUENCY_VALUE = "UpdateFrequencyValue";
     final static int IWANTCAMERA = 1;
     final static int IWANTCHANGESETTINGS = 2;
     final static int IWANTLOCATION = 3;
@@ -73,6 +74,15 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
     private int lastMagnitudeSensorValue = 10;
     private int minPercentValueSettings = 0;
     private int maxPercentValueSettings = 100;
+    /*
+        3 ~ 8 fps
+        4 ~ 4 fps
+        5 ~ 2 fps
+        6 ~ 1 fps
+        7 ~ 0.5 fps
+        8 ~ 0.25 fps (once in 4 seconds)
+     */
+    private int updateFrequencyValue = 1;
     private float lastLightSensorValue = 0;
     private float lastCameraSensorValue = 0;
     private ProgressBar bar;
@@ -370,6 +380,8 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
         useFootCandle = prefs.getBoolean(USE_FOOT_CANDLE_FOR_SHOW, false);
         minPercentValueSettings = prefs.getInt(MIN_PERCENT_VALUE, 0);
         maxPercentValueSettings = prefs.getInt(MAX_PERCENT_VALUE, 100);
+        updateFrequencyValue = prefs.getInt(FREQUENCY_VALUE, 4);
+
         if (prefs.getBoolean(BATTERY_LOW, false)) {
             int maxBatteryPercentValue = prefs.getInt(MainActivity.MAX_BATTERY_PERCENT_VALUE, 100);
             if (maxBatteryPercentValue < maxPercentValueSettings) {
@@ -679,6 +691,7 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
         lastMagnitudeSensorValue = prefs.getInt(MAGNITUDE_SENSOR_VALUE, 10);
         minPercentValueSettings = prefs.getInt(MIN_PERCENT_VALUE, 0);
         maxPercentValueSettings = prefs.getInt(MAX_PERCENT_VALUE, 100);
+        updateFrequencyValue = prefs.getInt(FREQUENCY_VALUE, 4);
         if (prefs.getBoolean(BATTERY_LOW, false)) {
             int maxBatteryPercentValue = prefs.getInt(MainActivity.MAX_BATTERY_PERCENT_VALUE, 100);
             if (maxBatteryPercentValue < maxPercentValueSettings) {
@@ -868,17 +881,8 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
     @Override
     public void onPreviewFrame(byte[] data, Camera camera) {
         try {
-            /*
-                3 ~ 8 fps
-                4 ~ 4 fps
-                5 ~ 2 fps
-                6 ~ 1 fps
-                7 ~ 0.5 fps
-                8 ~ 0.25 fps (once in 4 seconds)
-             */
-            long sub_step = 1;
-            int step_skip_dots = 1 << sub_step;
-            long currMillis = System.currentTimeMillis() >> (4 + sub_step);
+            int step_skip_dots = 1 << updateFrequencyValue;
+            long currMillis = System.currentTimeMillis() >> (4 + updateFrequencyValue);
             if (lastUpdateTimeMillisecondsStamp == currMillis)
                 return;
             lastUpdateTimeMillisecondsStamp = currMillis;

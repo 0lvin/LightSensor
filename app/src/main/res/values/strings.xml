@@ -37,4 +37,6 @@
     <string name="magnitudeSensorTitle">Magnitude value for hardware lightsensor.</string>
     <string name="maxBatteryPercentTitle">Maximum brightness value on low battery.</string>
     <string name="low_battery">Low battery level:</string>
+    <string name="updateFrequencyTitle">Brightness update frequency.</string>
+    <string name="update_in_second" translatable="false">%.2f sec</string>
 </resources>

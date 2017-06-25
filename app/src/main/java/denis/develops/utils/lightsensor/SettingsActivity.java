@@ -14,6 +14,7 @@ public class SettingsActivity extends Activity {
     private TextView maxTextPercent;
     private TextView maxBatteryTextPercent;
     private TextView sensorTextPercent;
+    private TextView updateFrequencyText;
     private Switch registerSwitch;
     private Switch registerSunSwitch;
     private Switch useBackCameraSwitch;
@@ -28,18 +29,24 @@ public class SettingsActivity extends Activity {
     private SeekBar maxPercentSeek;
     private SeekBar maxBatteryPercentSeek;
     private SeekBar magnitudeSensorSeek;
+    private SeekBar updateFrequencySeek;
     private boolean serviceEnabled = false;
     private boolean useBack = false;
     private boolean useFootCandle = false;
     private boolean dontUseCamera = false;
     private boolean cannotChangeBrightness = false;
     private boolean sunServiceEnabled = false;
+    private int updateFrequencyValue = 1;
 
     private void updateTextValues() {
         minTextPercent.setText(Integer.toString(minLastPercentValue) + "%");
         maxTextPercent.setText(Integer.toString(maxLastPercentValue) + "%");
         maxBatteryTextPercent.setText(Integer.toString(maxBatteryLastPercentValue) + "%");
         sensorTextPercent.setText(Float.toString((((float) lastMagnitudeSensorValue + 10) / 20)) + "x");
+        updateFrequencyText.setText(String.format(
+                getString(denis.develops.utils.lightsensor.R.string.update_in_second),
+                (float) (1 << (4 + updateFrequencyValue)) / 1024
+        ));
     }
 
     @Override
@@ -49,14 +56,15 @@ public class SettingsActivity extends Activity {
         sensorTextPercent = (TextView) findViewById(R.id.textSensorMagnitude);
         minTextPercent = (TextView) findViewById(R.id.textPercent);
         maxTextPercent = (TextView) findViewById(R.id.textMaxPercent);
+        updateFrequencyText = (TextView) findViewById(R.id.textUpdateFrequency);
         maxBatteryTextPercent = (TextView) findViewById(R.id.textBatteryMaxPercent);
         magnitudeSensorSeek = (SeekBar) findViewById(R.id.sensorMagnitudeValue);
         minPercentSeek = (SeekBar) findViewById(R.id.percentValue);
         maxPercentSeek = (SeekBar) findViewById(R.id.percentMaxValue);
         maxBatteryPercentSeek = (SeekBar) findViewById(R.id.percentBatteryMaxValue);
+        updateFrequencySeek = (SeekBar) findViewById(R.id.updateFrequencyValue);
         registerSwitch = (Switch) findViewById(R.id.switchAuto);
         registerSunSwitch = (Switch) findViewById(R.id.switchAutoSun);
-
 
         canntChangeBrightnessSwitch = (Switch) findViewById(R.id.disableChangeBrightness);
         useFootCandleSwitch = (Switch) findViewById(R.id.use_foot_candle);
@@ -68,8 +76,30 @@ public class SettingsActivity extends Activity {
         maxLastPercentValue = prefs.getInt(MainActivity.MAX_PERCENT_VALUE, 100);
         maxBatteryLastPercentValue = prefs.getInt(MainActivity.MAX_BATTERY_PERCENT_VALUE, 100);
         lastMagnitudeSensorValue = prefs.getInt(MainActivity.MAGNITUDE_SENSOR_VALUE, 10);
+        updateFrequencyValue = prefs.getInt(MainActivity.FREQUENCY_VALUE, 4);
+
         updateTextValues();
 
+        updateFrequencySeek.setMax(10);
+        updateFrequencySeek.setProgress(updateFrequencyValue);
+        updateFrequencySeek.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int position, boolean b) {
+                updateFrequencyValue = position;
+                updateTextValues();
+                savePreferences();
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
+            }
+        });
 
         magnitudeSensorSeek.setMax(40);
         magnitudeSensorSeek.setProgress(lastMagnitudeSensorValue);
@@ -230,6 +260,7 @@ public class SettingsActivity extends Activity {
         edit.putBoolean(MainActivity.USE_FOOT_CANDLE_FOR_SHOW, useFootCandle);
         edit.putBoolean(MainActivity.DISABLE_CAMERA, dontUseCamera);
         edit.putInt(MainActivity.MAGNITUDE_SENSOR_VALUE, this.lastMagnitudeSensorValue);
+        edit.putInt(MainActivity.FREQUENCY_VALUE, this.updateFrequencyValue);
         edit.apply();
     }
 }
