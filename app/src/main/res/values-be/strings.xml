@@ -36,4 +36,5 @@
     <string name="maxBatteryPercentTitle">Максімальнае значэнне яркасці на нізкім узроўні зарада батарэі.</string>
     <string name="low_battery">Нізкі ўзровень зарада батарэі:</string>
     <string name="updateFrequencyTitle">Частата абнаўлення яркасці.</string>
+    <string name="low_power_enabled">Cпажыванне мінімізавана</string>
 </resources>

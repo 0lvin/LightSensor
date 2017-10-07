@@ -36,4 +36,5 @@
     <string name="maxBatteryPercentTitle">Максимальне значення яскравості на низькому рівні заряду батареї.</string>
     <string name="low_battery">Низький рівень заряду батареї:</string>
     <string name="updateFrequencyTitle">Частота оновлення яскравості.</string>
+    <string name="low_power_enabled">Cпоживання мінімізовано</string>
 </resources>

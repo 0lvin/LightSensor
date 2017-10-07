@@ -36,4 +36,5 @@
     <string name="maxBatteryPercentTitle">Maksymalna jasność przy niskiej baterii.</string>
     <string name="low_battery">Niski poziom naładowania baterii:</string>
     <string name="updateFrequencyTitle">Częstotliwość aktualizacji jasności.</string>
+    <string name="low_power_enabled">Zużycie zminimalizowane</string>
 </resources>

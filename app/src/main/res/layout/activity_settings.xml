@@ -262,5 +262,12 @@
             android:layout_height="wrap_content"
             android:checked="false"
             android:text="@string/use_foot_candle" />
+
+        <Switch
+            android:id="@+id/low_power_enabled"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:checked="false"
+            android:text="@string/low_power_enabled" />
     </LinearLayout>
 </ScrollView>

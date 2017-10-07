@@ -21,6 +21,7 @@ public class SettingsActivity extends Activity {
     private Switch useFootCandleSwitch;
     private Switch canntChangeBrightnessSwitch;
     private Switch dontUseCameraSwitch;
+    private Switch lowPowerSwitch;
     private int lastMagnitudeSensorValue = 10;
     private int minLastPercentValue = 0;
     private int maxLastPercentValue = 100;
@@ -36,6 +37,7 @@ public class SettingsActivity extends Activity {
     private boolean dontUseCamera = false;
     private boolean cannotChangeBrightness = false;
     private boolean sunServiceEnabled = false;
+    private boolean lowPowerEnabled = false;
     private int updateFrequencyValue = 1;
 
     private void updateTextValues() {
@@ -70,6 +72,7 @@ public class SettingsActivity extends Activity {
         useFootCandleSwitch = (Switch) findViewById(R.id.use_foot_candle);
         useBackCameraSwitch = (Switch) findViewById(R.id.useBackCamera);
         dontUseCameraSwitch = (Switch) findViewById(R.id.dontUseCamera);
+        lowPowerSwitch = (Switch) findViewById(R.id.low_power_enabled);
 
         SharedPreferences prefs = getSharedPreferences(MainActivity.PREFERENCES_NAME, MODE_PRIVATE);
         minLastPercentValue = prefs.getInt(MainActivity.MIN_PERCENT_VALUE, 0);
@@ -80,7 +83,7 @@ public class SettingsActivity extends Activity {
 
         updateTextValues();
 
-        updateFrequencySeek.setMax(10);
+        updateFrequencySeek.setMax(12);
         updateFrequencySeek.setProgress(updateFrequencyValue);
         updateFrequencySeek.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
@@ -244,6 +247,16 @@ public class SettingsActivity extends Activity {
             }
         });
         dontUseCamera = dontUseCameraSwitch.isChecked();
+
+        lowPowerSwitch.setChecked(prefs.getBoolean(MainActivity.BATTERY_LOW, false));
+        lowPowerSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                lowPowerEnabled = b;
+                savePreferences();
+            }
+        });
+        lowPowerEnabled = lowPowerSwitch.isChecked();
     }
 
     private void savePreferences() {
@@ -259,6 +272,7 @@ public class SettingsActivity extends Activity {
         edit.putBoolean(MainActivity.USE_BACK_CAMERA, useBack);
         edit.putBoolean(MainActivity.USE_FOOT_CANDLE_FOR_SHOW, useFootCandle);
         edit.putBoolean(MainActivity.DISABLE_CAMERA, dontUseCamera);
+        edit.putBoolean(MainActivity.BATTERY_LOW, lowPowerEnabled);
         edit.putInt(MainActivity.MAGNITUDE_SENSOR_VALUE, this.lastMagnitudeSensorValue);
         edit.putInt(MainActivity.FREQUENCY_VALUE, this.updateFrequencyValue);
         edit.apply();
