@@ -8,8 +8,8 @@ android {
         applicationId "denis.develops.utils.lightsensor"
         minSdkVersion 14
         targetSdkVersion 26
-        versionCode 18
-        versionName "0.0.16"
+        versionCode 19
+        versionName "0.0.17"
     }
     buildTypes {
         release {

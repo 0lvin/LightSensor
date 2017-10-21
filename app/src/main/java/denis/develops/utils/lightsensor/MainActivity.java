@@ -288,7 +288,14 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
 
         int cameraId = this.getCameraId();
         if (cameraId != -1) {
-            camera = Camera.open(cameraId);
+            try {
+                camera = Camera.open(cameraId);
+            } catch (Exception e) {
+                Log.e(EVENTS_NAME, "Camera used by other application?:" + e.toString());
+                dontUseCamera = true;
+                return;
+            }
+
             Camera.Parameters params = camera.getParameters();
             params.setColorEffect(Camera.Parameters.EFFECT_MONO);
             params.setPreviewFormat(ImageFormat.NV21);
@@ -672,15 +679,15 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        textMagnitude = (TextView) findViewById(R.id.textMagnitude);
+        textMagnitude = findViewById(R.id.textMagnitude);
 
-        textAuthor = (TextView) findViewById(R.id.textViewAuthor);
-        textLightSensor = (TextView) findViewById(R.id.textLight);
-        textCameraLight = (TextView) findViewById(R.id.textCameraLight);
-        bar = (ProgressBar) findViewById(R.id.brightnessValue);
-        magnitude_seek = (SeekBar) findViewById(R.id.magnitudeValue);
+        textAuthor = findViewById(R.id.textViewAuthor);
+        textLightSensor = findViewById(R.id.textLight);
+        textCameraLight = findViewById(R.id.textCameraLight);
+        bar = findViewById(R.id.brightnessValue);
+        magnitude_seek = findViewById(R.id.magnitudeValue);
 
-        preview = (TextureView) findViewById(R.id.imageView);
+        preview = findViewById(R.id.imageView);
 
         cResolver = getContentResolver();
 
