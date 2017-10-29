@@ -3,7 +3,7 @@
     <string name="app_name">Датчык асвятлення</string>
     <string name="camera_light">Камера:</string>
     <string name="camera_preview">Препросмотр камеры</string>
-    <string name="license_text">Распрацавана Denis Pauk aka Olvin і Mitrand , 2015-2016 . Ліцэнзавана згодна GPL2 .</string>
+    <string name="license_text">Распрацавана Denis Pauk aka Olvin і Mitrand, 2015–2017. Ліцэнзавана згодна GPL2.</string>
     <string name="sensor_light">Сэнсар:</string>
     <string name="sensor_not_exist">няма</string>
     <string name="used_back_camera">Выкарыстоўваецца задняя камера</string>

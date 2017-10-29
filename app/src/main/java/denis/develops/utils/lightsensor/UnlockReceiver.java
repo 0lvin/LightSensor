@@ -4,15 +4,12 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.os.Build;
 import android.provider.Settings;
 import android.util.Log;
 
 import java.util.Calendar;
-import java.util.Objects;
 
 public class UnlockReceiver extends BroadcastReceiver {
-    final String EVENTS_NAME = "LightsSensors.receiver";
 
     public UnlockReceiver() {
     }
@@ -113,6 +110,7 @@ public class UnlockReceiver extends BroadcastReceiver {
         SharedPreferences prefs = context.getSharedPreferences(MainActivity.PREFERENCES_NAME, Context.MODE_PRIVATE);
         boolean auto_change = prefs.getBoolean(MainActivity.AUTO_VALUE, false);
         boolean sun_change = prefs.getBoolean(MainActivity.AUTO_SUN_VALUE, false);
+        String EVENTS_NAME = "LightsSensors.receiver";
         if (!auto_change && !sun_change) {
             Log.i(EVENTS_NAME, "Service disabled.");
             return;
@@ -122,16 +120,12 @@ public class UnlockReceiver extends BroadcastReceiver {
         if (Intent.ACTION_BATTERY_LOW.equals(intent.getAction())) {
             SharedPreferences.Editor edit = prefs.edit();
             edit.putBoolean(MainActivity.BATTERY_LOW, true);
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
-                edit.apply();
-            }
+            edit.apply();
         } else if (Intent.ACTION_BATTERY_OKAY.equals(intent.getAction()) ||
                 Intent.ACTION_POWER_CONNECTED.equals(intent.getAction())) {
             SharedPreferences.Editor edit = prefs.edit();
             edit.putBoolean(MainActivity.BATTERY_LOW, false);
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
-                edit.apply();
-            }
+            edit.apply();
         }
 
         Calendar curCalendar = Calendar.getInstance();

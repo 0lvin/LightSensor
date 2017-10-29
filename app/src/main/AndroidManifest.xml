@@ -38,7 +38,7 @@
             </intent-filter>
         </receiver>
 
-        <activity android:name=".SettingsActivity"></activity>
+        <activity android:name=".SettingsActivity" />
     </application>
 
 </manifest>

@@ -4,7 +4,7 @@
     <string name="sensor_light">Światło przez czujnik:</string>
     <string name="camera_light">Light od kamery:</string>
     <string name="camera_preview">kamera podglądu</string>
-    <string name="license_text">Twórca Dennis Pauk aka Olvin i Mitrand, 2015-2016. Licencjonowany pod GPL2.</string>
+    <string name="license_text">Twórca Denis Pauk aka Olvin i Mitrand, 2015–2017. Licencjonowany pod GPL2.</string>
     <string name="used_front_camera">Używane przedni czujnik aparatu.</string>
     <string name="used_back_camera">Używane powrotem czujnik aparatu.</string>
     <string name="used_light_sensor">Używane czujnik światła.</string>

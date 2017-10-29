@@ -2,7 +2,6 @@ package denis.develops.utils.lightsensor;
 
 import android.app.Activity;
 import android.content.ComponentName;
-import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -42,33 +41,32 @@ import java.util.regex.Pattern;
 public class MainActivity extends Activity implements TextureView.SurfaceTextureListener, Camera.PreviewCallback, Camera.AutoFocusCallback {
 
     final static String PREFERENCES_NAME = "preferences";
-    final static String MAGNITUDE_VALUE = "MagnitudeValue";
+    private final static String MAGNITUDE_VALUE = "MagnitudeValue";
     final static String MAGNITUDE_SENSOR_VALUE = "MagnitudeSensorValue";
     final static String MIN_PERCENT_VALUE = "PercentValue";
     final static String MAX_PERCENT_VALUE = "MaxPercentValue";
     final static String MAX_BATTERY_PERCENT_VALUE = "MaxBatteryPercentValue";
     final static String BATTERY_LOW = "BatteryLowUsed";
-    final static String RUNTIME_VALUE = "LastRunTime";
-    final static String EVENTS_NAME = "LightsSensors";
+    private final static String RUNTIME_VALUE = "LastRunTime";
+    private final static String EVENTS_NAME = "LightsSensors";
     final static String AUTO_VALUE = "AutoUpdateOnEvent";
     final static String AUTO_SUN_VALUE = "AutoUpdateOnEventSun";
     final static String DISABLE_CHANGE_BRIGHTNESS = "DisableChangeBrightness";
     final static String USE_FOOT_CANDLE_FOR_SHOW = "FootCandle";
     final static String DISABLE_CAMERA = "DisableCamera";
     final static String USE_BACK_CAMERA = "UseBackCamera";
-    final static String ALTITUDE_VALUE = "AltitudeValue";
+    private final static String ALTITUDE_VALUE = "AltitudeValue";
     final static String LONGITUDE_VALUE = "LongitudeValue";
     final static String LATITUDE_VALUE = "LatitudeValue";
     final static String FREQUENCY_VALUE = "UpdateFrequencyValue";
-    final static int IWANTCAMERA = 1;
-    final static int IWANTCHANGESETTINGS = 2;
-    final static int IWANTLOCATION = 3;
+    private final static int IWANTCAMERA = 1;
+    private final static int IWANTCHANGESETTINGS = 2;
+    private final static int IWANTLOCATION = 3;
     private final static int PRECISE = 100000;
-    Camera.Size cameraPreviewSize = null;
-    long lastUpdateTimeMillisecondsStamp = 0;
+    private Camera.Size cameraPreviewSize = null;
+    private long lastUpdateTimeMillisecondsStamp = 0;
     private SensorEventListener lightsSensorListener = null;
     private SensorManager sensorManager = null;
-    private ContentResolver cResolver;
     private int lastBrightnessValue = 0;
     private int lastMagnitudeValue = 10;
     private int lastMagnitudeSensorValue = 10;
@@ -86,7 +84,6 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
     private float lastLightSensorValue = 0;
     private float lastCameraSensorValue = 0;
     private ProgressBar bar;
-    private SeekBar magnitude_seek;
     private Camera camera = null;
     private TextureView preview;
     private TextView textAuthor;
@@ -282,7 +279,7 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
         }
     }
 
-    protected void initCamera() {
+    private void initCamera() {
         if (camera != null)
             return;
 
@@ -373,9 +370,13 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (checkSelfPermission(android.Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
                 // Register the listener with the Location Manager to receive location updates
-                locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 10000, 100, locationListener);
-                Location lastKnownLocation = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
-                updateLocation(lastKnownLocation);
+
+                if (locationManager != null) {
+                    locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 10000, 100, locationListener);
+                    Location lastKnownLocation = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+                    updateLocation(lastKnownLocation);
+                }
+
             }
         }
     }
@@ -500,7 +501,7 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
         }
     }
 
-    protected void deleteCamera() {
+    private void deleteCamera() {
         if (camera != null) {
             camera.setPreviewCallback(null);
             camera.stopPreview();
@@ -539,7 +540,9 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
                     // init location receiver
                     // Acquire a reference to the system Location Manager
                     LocationManager locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
-                    locationManager.removeUpdates(locationListener);
+                    if (locationManager != null) {
+                        locationManager.removeUpdates(locationListener);
+                    }
                     locationListener = null;
                 }
             }
@@ -661,16 +664,16 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
     private void initLightSensor() {
         // Obtain references to the SensorManager and the Light Sensor
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
-        List<Sensor> sensors = sensorManager.getSensorList(Sensor.TYPE_LIGHT);
-        if (sensors.size() > 0) {
-            usedLightSensor = true;
-            final Sensor lightSensor = sensorManager.getDefaultSensor(Sensor.TYPE_LIGHT);
-
-            if (lightsSensorListener != null && sensorManager != null) {
-                sensorManager.registerListener(
-                        lightsSensorListener, lightSensor, SensorManager.SENSOR_DELAY_NORMAL);
+        if (sensorManager != null) {
+            List<Sensor> sensors = sensorManager.getSensorList(Sensor.TYPE_LIGHT);
+            if (sensors.size() > 0) {
+                usedLightSensor = true;
+                final Sensor lightSensor = sensorManager.getDefaultSensor(Sensor.TYPE_LIGHT);
+                if (lightsSensorListener != null && sensorManager != null) {
+                    sensorManager.registerListener(
+                            lightsSensorListener, lightSensor, SensorManager.SENSOR_DELAY_NORMAL);
+                }
             }
-
         }
     }
 
@@ -685,11 +688,9 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
         textLightSensor = findViewById(R.id.textLight);
         textCameraLight = findViewById(R.id.textCameraLight);
         bar = findViewById(R.id.brightnessValue);
-        magnitude_seek = findViewById(R.id.magnitudeValue);
+        SeekBar magnitude_seek = findViewById(R.id.magnitudeValue);
 
         preview = findViewById(R.id.imageView);
-
-        cResolver = getContentResolver();
 
         registerBroadcastReceiver();
 
