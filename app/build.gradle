@@ -1,15 +1,15 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 25
-    buildToolsVersion "25.0.3"
+    compileSdkVersion 28
+    buildToolsVersion "28.0.1"
 
     defaultConfig {
         applicationId "denis.develops.utils.lightsensor"
         minSdkVersion 1
-        targetSdkVersion 25
-        versionCode 15
-        versionName "0.0.14"
+        targetSdkVersion 28
+        versionCode 21
+        versionName "0.0.18"
     }
     buildTypes {
         release {
