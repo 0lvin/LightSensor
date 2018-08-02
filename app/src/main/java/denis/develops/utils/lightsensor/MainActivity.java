@@ -319,7 +319,11 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
             if (previewSize != null) {
                 params.setPreviewSize(previewSize.width, previewSize.height);
             }
-            camera.setParameters(params);
+            try {
+                camera.setParameters(params);
+            } catch (Exception e) {
+                Log.e(EVENTS_NAME, "Issue with camera set params:" + e.toString());
+            }
             cameraPreviewSize = params.getPreviewSize();
         } else {
             dontUseCamera = true;
