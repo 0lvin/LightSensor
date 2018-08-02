@@ -277,7 +277,14 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
 
         int cameraId = this.getCameraId();
         if (cameraId != -1) {
-            camera = Camera.open(cameraId);
+            try {
+                camera = Camera.open(cameraId);
+            } catch (Exception e) {
+                Log.e(EVENTS_NAME, "Camera used by other application?:" + e.toString());
+                dontUseCamera = true;
+                return;
+            }
+
             Camera.Parameters params = camera.getParameters();
             params.setColorEffect(Camera.Parameters.EFFECT_MONO);
             params.setPreviewFormat(ImageFormat.NV21);
@@ -304,7 +311,11 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Ca
             if (previewSize != null) {
                 params.setPreviewSize(previewSize.width, previewSize.height);
             }
-            camera.setParameters(params);
+            try {
+                camera.setParameters(params);
+            } catch (Exception e) {
+                Log.e(EVENTS_NAME, "Issue with camera set params:" + e.toString());
+            }
             cameraPreviewSize = params.getPreviewSize();
         } else {
             dontUseCamera = true;
