@@ -29,10 +29,10 @@ public class SettingsActivity extends Activity {
     private int updateFrequencyValue = 1;
 
     private void updateTextValues() {
-        minTextPercent.setText(Integer.toString(minLastPercentValue) + "%");
-        maxTextPercent.setText(Integer.toString(maxLastPercentValue) + "%");
-        maxBatteryTextPercent.setText(Integer.toString(maxBatteryLastPercentValue) + "%");
-        sensorTextPercent.setText(Float.toString((((float) lastMagnitudeSensorValue + 10) / 20)) + "x");
+        minTextPercent.setText(minLastPercentValue + "%");
+        maxTextPercent.setText(maxLastPercentValue + "%");
+        maxBatteryTextPercent.setText(maxBatteryLastPercentValue + "%");
+        sensorTextPercent.setText(((float) lastMagnitudeSensorValue + 10) / 20 + "x");
         updateFrequencyText.setText(String.format(
                 getString(denis.develops.utils.lightsensor.R.string.update_in_second),
                 (float) (1 << (4 + updateFrequencyValue)) / 1024

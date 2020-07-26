@@ -453,7 +453,7 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
 
     @Override
     public void onRequestPermissionsResult(int requestCode,
-                                           String permissions[], int[] grantResults) {
+                                           String[] permissions, int[] grantResults) {
         switch (requestCode) {
             case IWANTLOCATION: {
                 // If request is cancelled, the result arrays are empty.
@@ -634,7 +634,7 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
         } else {
             textCameraLight.setText(cameraText + String.format("%.1f", (float) light_value_lux));
         }
-        textMagnitude.setText(Float.toString(getMagnitude()) + "x");
+        textMagnitude.setText(getMagnitude() + "x");
         String stateText = getString(R.string.license_text) + "\n";
         if (this.useFootCandle) {
             stateText += getString(R.string.used_foot_candle) + "\n";
@@ -651,11 +651,11 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
             stateText += getString(R.string.used_front_camera) + "\n";
         }
         stateText += getString(R.string.have_used_for) + " ";
-        stateText += Long.toString(usedHours) + " " + getString(R.string.hours) + " ";
-        stateText += Long.toString(usedMinutes) + " " + getString(R.string.minutes) + " ";
-        stateText += Long.toString(usedSeconds) + " " + getString(R.string.seconds) + ".\n";
+        stateText += usedHours + " " + getString(R.string.hours) + " ";
+        stateText += usedMinutes + " " + getString(R.string.minutes) + " ";
+        stateText += usedSeconds + " " + getString(R.string.seconds) + ".\n";
         stateText += this.locationString;
-        stateText += getString(R.string.low_battery) + " " + Boolean.toString(this.low_battery);
+        stateText += getString(R.string.low_battery) + " " + this.low_battery;
 
         textAuthor.setText(stateText);
         if (dontUseCamera) {
