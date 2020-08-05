@@ -294,35 +294,62 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
             }
 
             Camera.Parameters params = camera.getParameters();
-            params.setColorEffect(Camera.Parameters.EFFECT_MONO);
-            params.setPreviewFormat(ImageFormat.NV21);
+            try {
+                params.setColorEffect(Camera.Parameters.EFFECT_MONO);
+                camera.setParameters(params);
+            } catch (Exception e) {
+                params = camera.getParameters();
+                Log.e(EVENTS_NAME, "Cannot set color effect:" + e.toString());
+            }
+            try {
+                params.setPreviewFormat(ImageFormat.NV21);
+                camera.setParameters(params);
+            } catch (Exception e) {
+                params = camera.getParameters();
+                Log.e(EVENTS_NAME, "Cannot set preview format:" + e.toString());
+            }
+
             String minimalIso = getMinimalIso(params);
             if (minimalIso != null) {
                 try {
                     params.set("iso", minimalIso);
                     camera.setParameters(params);
                 } catch (Exception e) {
+                    params = camera.getParameters();
                     Log.e(EVENTS_NAME, "Cannot set camera iso value:" + e.toString());
                 }
             }
             int[] fpsValue = getMinimalFps(params);
             if (fpsValue != null) {
-                params.setPreviewFpsRange(fpsValue[0], fpsValue[1]);
+                try {
+                    params.setPreviewFpsRange(fpsValue[0], fpsValue[1]);
+                    camera.setParameters(params);
+                } catch (Exception e) {
+                    params = camera.getParameters();
+                    Log.e(EVENTS_NAME, "Cannot set fps range:" + e.toString());
+                }
             }
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
                 if (params.isAutoExposureLockSupported()) {
-                    params.setAutoExposureLock(true);
-                    params.setExposureCompensation(1);
+                    try {
+                        params.setAutoExposureLock(true);
+                        params.setExposureCompensation(1);
+                        camera.setParameters(params);
+                    } catch (Exception e) {
+                        params = camera.getParameters();
+                        Log.e(EVENTS_NAME, "Cannot set exposure:" + e.toString());
+                    }
                 }
             }
             Camera.Size previewSize = getMinimalPreviewSize(params);
             if (previewSize != null) {
-                params.setPreviewSize(previewSize.width, previewSize.height);
-            }
-            try {
-                camera.setParameters(params);
-            } catch (Exception e) {
-                Log.e(EVENTS_NAME, "Issue with camera set params:" + e.toString());
+                try {
+                    params.setPreviewSize(previewSize.width, previewSize.height);
+                    camera.setParameters(params);
+                } catch (Exception e) {
+                    params = camera.getParameters();
+                    Log.e(EVENTS_NAME, "Issue with camera set params:" + e.toString());
+                }
             }
             cameraPreviewSize = params.getPreviewSize();
         } else {
@@ -457,33 +484,37 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
         switch (requestCode) {
             case IWANTLOCATION: {
                 // If request is cancelled, the result arrays are empty.
+                SharedPreferences prefs = getSharedPreferences(MainActivity.PREFERENCES_NAME, Context.MODE_PRIVATE);
+                SharedPreferences.Editor edit = prefs.edit();
                 if (grantResults.length > 0
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     useSunFix = true;
                     initLocationSensor();
+                    edit.putBoolean(MainActivity.AUTO_SUN_VALUE, true);
                 } else {
-                    SharedPreferences prefs = getSharedPreferences(MainActivity.PREFERENCES_NAME, Context.MODE_PRIVATE);
-                    SharedPreferences.Editor edit = prefs.edit();
                     edit.putBoolean(MainActivity.AUTO_SUN_VALUE, false);
-                    edit.apply();
                 }
+                edit.apply();
                 break;
             }
             case IWANTCAMERA: {
+                SharedPreferences prefs = getSharedPreferences(MainActivity.PREFERENCES_NAME, Context.MODE_PRIVATE);
+                SharedPreferences.Editor edit = prefs.edit();
                 // If request is cancelled, the result arrays are empty.
                 if (grantResults.length > 0
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     dontUseCamera = false;
                     this.initCamera();
+                    edit.putBoolean(MainActivity.DISABLE_CAMERA, false);
                 } else {
-                    SharedPreferences prefs = getSharedPreferences(MainActivity.PREFERENCES_NAME, Context.MODE_PRIVATE);
-                    SharedPreferences.Editor edit = prefs.edit();
                     edit.putBoolean(MainActivity.DISABLE_CAMERA, true);
-                    edit.apply();
                 }
+                edit.apply();
                 break;
             }
             case IWANTCHANGESETTINGS: {
+                SharedPreferences prefs = getSharedPreferences(MainActivity.PREFERENCES_NAME, Context.MODE_PRIVATE);
+                SharedPreferences.Editor edit = prefs.edit();
                 // If request is cancelled, the result arrays are empty.
                 if (grantResults.length > 0
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
@@ -493,13 +524,12 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && Settings.System.canWrite(this)) {
                         // maybe i have rights?
                         cannotChangeBrightness = false;
+                        edit.putBoolean(MainActivity.DISABLE_CHANGE_BRIGHTNESS, false);
                     } else {
-                        SharedPreferences prefs = getSharedPreferences(MainActivity.PREFERENCES_NAME, Context.MODE_PRIVATE);
-                        SharedPreferences.Editor edit = prefs.edit();
                         edit.putBoolean(MainActivity.DISABLE_CHANGE_BRIGHTNESS, true);
-                        edit.apply();
                     }
                 }
+                edit.apply();
                 break;
             }
         }
