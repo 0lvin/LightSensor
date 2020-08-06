@@ -1,9 +1,14 @@
 package denis.develops.utils.lightsensor;
 
+import android.app.AlarmManager;
+import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.provider.Settings;
 import android.util.Log;
 
@@ -11,7 +16,46 @@ import java.util.Calendar;
 
 public class UnlockReceiver extends BroadcastReceiver {
 
+    private static String EVENTS_NAME = "LightsSensors.receiver";
+
     public UnlockReceiver() {
+    }
+
+    public void registerReceivers(Context context) {
+        try {
+            Log.i(EVENTS_NAME, "Register unlock receiver.");
+            final IntentFilter theFilter = new IntentFilter();
+            /* System Defined Broadcast */
+            theFilter.addAction(Intent.ACTION_SCREEN_ON);
+            theFilter.addAction(Intent.ACTION_USER_PRESENT);
+
+            context.registerReceiver(this, theFilter);
+
+        } catch (Exception e) {
+            Log.e(EVENTS_NAME, "Cannot register unlock receiver:" + e.toString());
+        }
+
+        try {
+            // enable service on system level
+            ComponentName receiver = new ComponentName(context, UnlockReceiver.class);
+            PackageManager pm = context.getPackageManager();
+
+            pm.setComponentEnabledSetting(receiver,
+                    PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
+                    PackageManager.DONT_KILL_APP);
+        } catch (Exception e) {
+            Log.e(EVENTS_NAME, "Cannot register package:" + e.toString());
+        }
+
+        try {
+            AlarmManager alarmMgr = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+            Intent intent = new Intent(context, UnlockReceiver.class);
+            PendingIntent alarmIntent = PendingIntent.getBroadcast(context, 0, intent, 0);
+            alarmMgr.setInexactRepeating(AlarmManager.RTC, 0, AlarmManager.INTERVAL_HOUR, alarmIntent);
+        } catch (Exception e) {
+            Log.e(EVENTS_NAME, "Cannot register alarm receiver:" + e.toString());
+        }
+
     }
 
     public static double getSunsetTime(boolean sunrise, double longitude, double latitude) {
@@ -107,10 +151,14 @@ public class UnlockReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
+        // init alarms and broadcast
+        if (intent != null && intent.getAction() != null && intent.getAction().equals("android.intent.action.BOOT_COMPLETED")) {
+            this.registerReceivers(context);
+        }
+
         SharedPreferences prefs = context.getSharedPreferences(MainActivity.PREFERENCES_NAME, Context.MODE_PRIVATE);
         boolean auto_change = prefs.getBoolean(MainActivity.AUTO_VALUE, false);
         boolean sun_change = prefs.getBoolean(MainActivity.AUTO_SUN_VALUE, false);
-        String EVENTS_NAME = "LightsSensors.receiver";
         if (!auto_change && !sun_change) {
             Log.i(EVENTS_NAME, "Service disabled.");
             return;
@@ -188,7 +236,7 @@ public class UnlockReceiver extends BroadcastReceiver {
             Settings.System.putInt(context.getContentResolver(), Settings.System.SCREEN_BRIGHTNESS, (int) value);
         } catch (Exception e) {
             //Throw an error case it couldn't be retrieved
-            Log.e("Error", "Cannot access system brightness:" + e.toString());
+            Log.e(EVENTS_NAME, "Cannot access system brightness:" + e.toString());
         }
     }
 

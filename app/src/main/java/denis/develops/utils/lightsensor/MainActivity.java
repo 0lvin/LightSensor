@@ -1,10 +1,8 @@
 package denis.develops.utils.lightsensor;
 
 import android.app.Activity;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
@@ -129,27 +127,8 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
     }
 
     private void registerBroadcastReceiver() {
-        try {
-            Log.i(EVENTS_NAME, "Register unlock receiver.");
-            final IntentFilter theFilter = new IntentFilter();
-            /* System Defined Broadcast */
-            theFilter.addAction(Intent.ACTION_SCREEN_ON);
-            theFilter.addAction(Intent.ACTION_USER_PRESENT);
-            UnlockReceiver mUnlockReceiver = new UnlockReceiver();
-
-            getApplicationContext().registerReceiver(mUnlockReceiver, theFilter);
-
-            // disable service on system level
-            ComponentName receiver = new ComponentName(getApplicationContext(), UnlockReceiver.class);
-            PackageManager pm = getApplicationContext().getPackageManager();
-
-            pm.setComponentEnabledSetting(receiver,
-                    PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
-                    PackageManager.DONT_KILL_APP);
-
-        } catch (Exception e) {
-            Log.e(EVENTS_NAME, "Cannot register unlock receiver:" + e.toString());
-        }
+        UnlockReceiver mUnlockReceiver = new UnlockReceiver();
+        mUnlockReceiver.registerReceivers(getApplicationContext());
     }
 
     private int[] getMinimalFps(Camera.Parameters params) {

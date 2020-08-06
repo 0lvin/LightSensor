@@ -5,6 +5,7 @@
     <uses-permission android:name="android.permission.CAMERA" android:required="false"  />
     <uses-permission android:name="android.permission.WRITE_SETTINGS" android:required="false"  />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
 
     <!-- Needed only if your app targets Android 5.0 (API level 21) or higher. -->
     <uses-feature android:name="android.hardware.location.network" />
@@ -29,7 +30,7 @@
 
         <receiver
             android:name=".UnlockReceiver"
-            android:enabled="true"
+            android:enabled="false"
             android:exported="true"
             android:icon="@drawable/ic_launcher">
             <intent-filter>
@@ -37,6 +38,7 @@
                 <action android:name="android.intent.action.USER_PRESENT" />
                 <action android:name="android.intent.action.BATTERY_LOW"/>
                 <action android:name="android.intent.action.BATTERY_OKAY"/>
+                <action android:name="android.intent.action.BOOT_COMPLETED"/>
             </intent-filter>
         </receiver>
 
