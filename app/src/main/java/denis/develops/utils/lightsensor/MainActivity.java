@@ -436,6 +436,7 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
         useBack = prefs.getBoolean(USE_BACK_CAMERA, false);
         if (!dontUseCamera) {
             this.initCamera();
+            this.recreatePreview();
         }
         lastCameraSensorValue = 0;
         lastLightSensorValue = 0;
@@ -454,6 +455,21 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
 
         if (useSunFix) {
             initLocationSensor();
+        }
+    }
+
+
+    private void recreatePreview() {
+        // When the screen is turned off and turned back on, the SurfaceTexture is already
+        // available, and "onSurfaceTextureAvailable" will not be called. In that case, we can open
+        // a camera and start preview from here (otherwise, we wait until the surface is ready in
+        // the SurfaceTextureListener).
+        if (preview.isAvailable()) {
+            openCamera();
+        }
+        // fix texture listener
+        if (preview.getSurfaceTextureListener() != this) {
+            preview.setSurfaceTextureListener(this);
         }
     }
 
@@ -756,15 +772,8 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
         bar.setMax(256);
         bar.setProgress(this.lastBrightnessValue);
 
-        // When the screen is turned off and turned back on, the SurfaceTexture is already
-        // available, and "onSurfaceTextureAvailable" will not be called. In that case, we can open
-        // a camera and start preview from here (otherwise, we wait until the surface is ready in
-        // the SurfaceTextureListener).
-        if (preview.isAvailable()) {
-            openCamera();
-        } else {
-            preview.setSurfaceTextureListener(this);
-        }
+        this.recreatePreview();
+        // update values
         this.updateShowedValues();
 
         // Implement a listener to receive updates
