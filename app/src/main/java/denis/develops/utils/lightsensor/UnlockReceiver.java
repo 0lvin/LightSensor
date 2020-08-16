@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.provider.Settings;
 import android.util.Log;
 
@@ -47,15 +48,17 @@ public class UnlockReceiver extends BroadcastReceiver {
             Log.e(EVENTS_NAME, "Cannot register package:" + e.toString());
         }
 
-        try {
-            AlarmManager alarmMgr = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
-            Intent intent = new Intent(context, UnlockReceiver.class);
-            PendingIntent alarmIntent = PendingIntent.getBroadcast(context, 0, intent, 0);
-            alarmMgr.setInexactRepeating(AlarmManager.RTC, 0, AlarmManager.INTERVAL_HOUR, alarmIntent);
-        } catch (Exception e) {
-            Log.e(EVENTS_NAME, "Cannot register alarm receiver:" + e.toString());
+        // Version O has issues with broadcast receivers, register our hack for such
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            try {
+                AlarmManager alarmMgr = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+                Intent intent = new Intent(context, UnlockReceiver.class);
+                PendingIntent alarmIntent = PendingIntent.getBroadcast(context, 0, intent, 0);
+                alarmMgr.setInexactRepeating(AlarmManager.RTC, 0, AlarmManager.INTERVAL_HALF_HOUR, alarmIntent);
+            } catch (Exception e) {
+                Log.e(EVENTS_NAME, "Cannot register alarm receiver:" + e.toString());
+            }
         }
-
     }
 
     public static double getSunsetTime(boolean sunrise, double longitude, double latitude) {
@@ -152,7 +155,7 @@ public class UnlockReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
         // init alarms and broadcast
-        if (intent != null && intent.getAction() != null && intent.getAction().equals("android.intent.action.BOOT_COMPLETED")) {
+        if (Intent.ACTION_BOOT_COMPLETED.equals(intent.getAction())) {
             this.registerReceivers(context);
         }
 
@@ -176,7 +179,11 @@ public class UnlockReceiver extends BroadcastReceiver {
             edit.apply();
         }
 
-        Calendar curCalendar = Calendar.getInstance();
+        double summ_value = this.getLightByCalendar(prefs);
+        this.setBrightness(context, prefs, summ_value);
+    }
+
+    private void setBrightness(Context context, SharedPreferences prefs, double summ_value) {
         float minPercentValue = prefs.getInt(MainActivity.MIN_PERCENT_VALUE, 0);
         float maxPercentValue = prefs.getInt(MainActivity.MAX_PERCENT_VALUE, 100);
 
@@ -189,6 +196,25 @@ public class UnlockReceiver extends BroadcastReceiver {
             }
         }
 
+        try {
+            double value = Math.min(summ_value + (minPercentValue * 256 / 100), (maxPercentValue * 256 / 100));
+            if (value > 255) {
+                value = 255;
+            }
+
+            Log.i(EVENTS_NAME, "Set brightness to " + value);
+            Settings.System.putInt(context.getContentResolver(), Settings.System.SCREEN_BRIGHTNESS, (int) value);
+        } catch (Exception e) {
+            //Throw an error case it couldn't be retrieved
+            Log.e(EVENTS_NAME, "Cannot access system brightness:" + e.toString());
+        }
+    }
+
+    private double getLightByCalendar(SharedPreferences prefs){
+        boolean auto_change = prefs.getBoolean(MainActivity.AUTO_VALUE, false);
+        boolean sun_change = prefs.getBoolean(MainActivity.AUTO_SUN_VALUE, false);
+
+        Calendar curCalendar = Calendar.getInstance();
         double auto_value = 255;
         double sun_value = 255;
         double curr_time_hour = curCalendar.get(Calendar.HOUR_OF_DAY) + (float) curCalendar.get(Calendar.MINUTE) / 60;
@@ -229,15 +255,6 @@ public class UnlockReceiver extends BroadcastReceiver {
         } else if (auto_change) {
             summ_value = auto_value;
         }
-        try {
-            double value = Math.min(summ_value + (minPercentValue * 256 / 100), (maxPercentValue * 256 / 100));
-
-            Log.i(EVENTS_NAME, "Set brightness to " + value);
-            Settings.System.putInt(context.getContentResolver(), Settings.System.SCREEN_BRIGHTNESS, (int) value);
-        } catch (Exception e) {
-            //Throw an error case it couldn't be retrieved
-            Log.e(EVENTS_NAME, "Cannot access system brightness:" + e.toString());
-        }
+        return summ_value;
     }
-
 }
