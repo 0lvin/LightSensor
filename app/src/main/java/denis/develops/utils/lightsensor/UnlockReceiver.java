@@ -180,10 +180,14 @@ public class UnlockReceiver extends BroadcastReceiver {
         }
 
         double summ_value = this.getLightByCalendar(prefs);
-        this.setBrightness(context, prefs, summ_value);
+        boolean smooth_change = !(
+                Intent.ACTION_SCREEN_ON.equals(intent.getAction()) ||
+                Intent.ACTION_USER_PRESENT.equals(intent.getAction()) ||
+                Intent.ACTION_USER_UNLOCKED.equals(intent.getAction()));
+        this.setBrightness(context, prefs, summ_value, smooth_change);
     }
 
-    private void setBrightness(Context context, SharedPreferences prefs, double summ_value) {
+    private void setBrightness(Context context, SharedPreferences prefs, double summ_value, boolean smooth) {
         float minPercentValue = prefs.getInt(MainActivity.MIN_PERCENT_VALUE, 0);
         float maxPercentValue = prefs.getInt(MainActivity.MAX_PERCENT_VALUE, 100);
 
@@ -198,6 +202,13 @@ public class UnlockReceiver extends BroadcastReceiver {
 
         try {
             double value = Math.min(summ_value + (minPercentValue * 256 / 100), (maxPercentValue * 256 / 100));
+
+            if (smooth)
+            {
+                Log.i(EVENTS_NAME, "Set smooth brightness to " + value);
+                value = (value + (double) Settings.System.getInt(context.getContentResolver(), Settings.System.SCREEN_BRIGHTNESS)) / 2;
+            }
+
             if (value > 255) {
                 value = 255;
             }
