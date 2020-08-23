@@ -31,6 +31,7 @@
     <string name="used_lux">Pokaż w lux(0.0929 foot candle).</string>
     <string name="used_foot_candle">Pokaż w foot candle.</string>
     <string name="use_foot_candle">Używać foot candle.</string>
+    <string name="use_mono_preview">Pokaż czarno-biały obraz w podglądzie.</string>
     <string name="maxPercentTitle">Maksymalna wartość jasności.</string>
     <string name="magnitudeSensorTitle">Zwiększ wartość dla czujnika światła</string>
     <string name="maxBatteryPercentTitle">Maksymalna jasność przy niskiej baterii.</string>

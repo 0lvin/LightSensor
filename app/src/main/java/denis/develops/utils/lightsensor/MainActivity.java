@@ -51,6 +51,7 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
     final static String AUTO_SUN_VALUE = "AutoUpdateOnEventSun";
     final static String DISABLE_CHANGE_BRIGHTNESS = "DisableChangeBrightness";
     final static String USE_FOOT_CANDLE_FOR_SHOW = "FootCandle";
+    final static String USE_MONO_PREVIEW = "MonoPreviewOnly";
     final static String DISABLE_CAMERA = "DisableCamera";
     final static String USE_BACK_CAMERA = "UseBackCamera";
     private final static String ALTITUDE_VALUE = "AltitudeValue";
@@ -94,6 +95,7 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
     private boolean cannotChangeBrightness = false;
     private boolean dontUseCamera = false;
     private boolean useFootCandle = false;
+    private boolean useMonoPreview = true;
     private boolean low_battery = false;
     private TextView textCameraLight;
     private TextView textMagnitude;
@@ -258,7 +260,7 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
         }
     }
 
-    private void initCamera() {
+    private void initCamera(boolean monoEnabled) {
         if (camera != null)
             return;
 
@@ -273,12 +275,14 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
             }
 
             Camera.Parameters params = camera.getParameters();
-            try {
-                params.setColorEffect(Camera.Parameters.EFFECT_MONO);
-                camera.setParameters(params);
-            } catch (Exception e) {
-                params = camera.getParameters();
-                Log.e(EVENTS_NAME, "Cannot set color effect:" + e.toString());
+            if (monoEnabled) {
+                try {
+                    params.setColorEffect(Camera.Parameters.EFFECT_MONO);
+                    camera.setParameters(params);
+                } catch (Exception e) {
+                    params = camera.getParameters();
+                    Log.e(EVENTS_NAME, "Cannot set color effect:" + e.toString());
+                }
             }
             try {
                 params.setPreviewFormat(ImageFormat.NV21);
@@ -396,6 +400,7 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
         super.onResume();
         SharedPreferences prefs = getSharedPreferences(PREFERENCES_NAME, MODE_PRIVATE);
         useFootCandle = prefs.getBoolean(USE_FOOT_CANDLE_FOR_SHOW, false);
+        useMonoPreview = prefs.getBoolean(USE_MONO_PREVIEW, true);
         minPercentValueSettings = prefs.getInt(MIN_PERCENT_VALUE, 0);
         maxPercentValueSettings = prefs.getInt(MAX_PERCENT_VALUE, 100);
         updateFrequencyValue = prefs.getInt(FREQUENCY_VALUE, 4);
@@ -435,7 +440,7 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
         }
         useBack = prefs.getBoolean(USE_BACK_CAMERA, false);
         if (!dontUseCamera) {
-            this.initCamera();
+            this.initCamera(useMonoPreview);
             this.recreatePreview();
         }
         lastCameraSensorValue = 0;
@@ -499,7 +504,7 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
                 if (grantResults.length > 0
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     dontUseCamera = false;
-                    this.initCamera();
+                    this.initCamera(useMonoPreview);
                     edit.putBoolean(MainActivity.DISABLE_CAMERA, false);
                 } else {
                     edit.putBoolean(MainActivity.DISABLE_CAMERA, true);
@@ -812,7 +817,7 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
 
     private void openCamera() {
         if (!dontUseCamera) {
-            this.initCamera();
+            this.initCamera(useMonoPreview);
         }
 
         if (camera != null) {

@@ -31,6 +31,7 @@
     <string name="used_lux">Використовуються значення в lux(0.0929 foot candle).</string>
     <string name="used_foot_candle">Використовуються значення в foot candle.</string>
     <string name="use_foot_candle">Використовувати foot candle.</string>
+    <string name="use_mono_preview">Показати чорно-біле зображення в попередньому перегляді.</string>
     <string name="maxPercentTitle">Максимальне значення яскравості.</string>
     <string name="magnitudeSensorTitle">Збільшити значення для датчика світла в</string>
     <string name="maxBatteryPercentTitle">Максимальне значення яскравості на низькому рівні заряду батареї.</string>

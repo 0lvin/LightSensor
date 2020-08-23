@@ -264,6 +264,13 @@
             android:text="@string/use_foot_candle" />
 
         <Switch
+            android:id="@+id/use_mono_preview"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:checked="false"
+            android:text="@string/use_mono_preview" />
+
+        <Switch
             android:id="@+id/low_power_enabled"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"

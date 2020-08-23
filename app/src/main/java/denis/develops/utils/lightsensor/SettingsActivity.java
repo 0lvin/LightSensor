@@ -22,6 +22,7 @@ public class SettingsActivity extends Activity {
     private boolean serviceEnabled = false;
     private boolean useBack = false;
     private boolean useFootCandle = false;
+    private boolean useMonoPreview = true;
     private boolean dontUseCamera = false;
     private boolean cannotChangeBrightness = false;
     private boolean sunServiceEnabled = false;
@@ -58,6 +59,7 @@ public class SettingsActivity extends Activity {
 
         Switch canntChangeBrightnessSwitch = findViewById(R.id.disableChangeBrightness);
         Switch useFootCandleSwitch = findViewById(R.id.use_foot_candle);
+        Switch useMonoPreviewSwitch = findViewById(R.id.use_mono_preview);
         Switch useBackCameraSwitch = findViewById(R.id.useBackCamera);
         Switch dontUseCameraSwitch = findViewById(R.id.dontUseCamera);
         Switch lowPowerSwitch = findViewById(R.id.low_power_enabled);
@@ -186,6 +188,16 @@ public class SettingsActivity extends Activity {
         });
         useFootCandle = useFootCandleSwitch.isChecked();
 
+        useMonoPreviewSwitch.setChecked(prefs.getBoolean(MainActivity.USE_MONO_PREVIEW, true));
+        useMonoPreviewSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                useMonoPreview = b;
+                savePreferences();
+            }
+        });
+        useMonoPreview = useMonoPreviewSwitch.isChecked();
+
         registerSwitch.setChecked(prefs.getBoolean(MainActivity.AUTO_VALUE, false));
         registerSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
@@ -253,12 +265,12 @@ public class SettingsActivity extends Activity {
         edit.putBoolean(MainActivity.AUTO_VALUE, serviceEnabled);
         edit.putBoolean(MainActivity.AUTO_SUN_VALUE, sunServiceEnabled);
         edit.putBoolean(MainActivity.USE_FOOT_CANDLE_FOR_SHOW, useFootCandle);
+        edit.putBoolean(MainActivity.USE_MONO_PREVIEW, useMonoPreview);
         edit.putInt(MainActivity.MIN_PERCENT_VALUE, this.minLastPercentValue);
         edit.putInt(MainActivity.MAX_PERCENT_VALUE, this.maxLastPercentValue);
         edit.putInt(MainActivity.MAX_BATTERY_PERCENT_VALUE, this.maxBatteryLastPercentValue);
         edit.putBoolean(MainActivity.DISABLE_CHANGE_BRIGHTNESS, cannotChangeBrightness);
         edit.putBoolean(MainActivity.USE_BACK_CAMERA, useBack);
-        edit.putBoolean(MainActivity.USE_FOOT_CANDLE_FOR_SHOW, useFootCandle);
         edit.putBoolean(MainActivity.DISABLE_CAMERA, dontUseCamera);
         edit.putBoolean(MainActivity.BATTERY_LOW, lowPowerEnabled);
         edit.putInt(MainActivity.MAGNITUDE_SENSOR_VALUE, this.lastMagnitudeSensorValue);
