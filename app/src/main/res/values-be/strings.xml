@@ -3,7 +3,7 @@
     <string name="app_name">Датчык асвятлення</string>
     <string name="camera_light">Камера:</string>
     <string name="camera_preview">Препросмотр камеры</string>
-    <string name="license_text">Распрацавана Denis Pauk aka Olvin і Mitrand, 2015–2017. Ліцэнзавана згодна GPL2.</string>
+    <string name="license_text">Ліцэнзавана згодна GPL2.</string>
     <string name="sensor_light">Сэнсар:</string>
     <string name="sensor_not_exist">няма</string>
     <string name="used_back_camera">Выкарыстоўваецца задняя камера</string>
@@ -38,4 +38,7 @@
     <string name="low_battery">Нізкі ўзровень зарада батарэі:</string>
     <string name="updateFrequencyTitle">Частата абнаўлення яркасці.</string>
     <string name="low_power_enabled">Cпажыванне мінімізавана</string>
+    <string name="preview_active_seconds">Папярэдні прагляд будзе спынены</string>
+    <string name="preview_stoped_some_time">Папярэдні прагляд спынены, націсніце для папярэдняга прагляду.</string>
+    <string name="previewTimeTitle">Папярэдні прагляд, секунд</string>
 </resources>

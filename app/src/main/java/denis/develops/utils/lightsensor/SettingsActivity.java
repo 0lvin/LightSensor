@@ -15,6 +15,7 @@ public class SettingsActivity extends Activity {
     private TextView maxBatteryTextPercent;
     private TextView sensorTextPercent;
     private TextView updateFrequencyText;
+    private TextView previewTimeText;
     private int lastMagnitudeSensorValue = 10;
     private int minLastPercentValue = 0;
     private int maxLastPercentValue = 100;
@@ -28,6 +29,7 @@ public class SettingsActivity extends Activity {
     private boolean sunServiceEnabled = false;
     private boolean lowPowerEnabled = false;
     private int updateFrequencyValue = 1;
+    private int previewTimeValue = 1;
 
     private void updateTextValues() {
         minTextPercent.setText(minLastPercentValue + "%");
@@ -38,6 +40,7 @@ public class SettingsActivity extends Activity {
                 getString(denis.develops.utils.lightsensor.R.string.update_in_second),
                 (float) (1 << (4 + updateFrequencyValue)) / 1024
         ));
+        previewTimeText.setText(Integer.toString(previewTimeValue));
     }
 
     @Override
@@ -48,12 +51,14 @@ public class SettingsActivity extends Activity {
         minTextPercent = findViewById(R.id.textPercent);
         maxTextPercent = findViewById(R.id.textMaxPercent);
         updateFrequencyText = findViewById(R.id.textUpdateFrequency);
+        previewTimeText = findViewById(R.id.textPreviewTime);
         maxBatteryTextPercent = findViewById(R.id.textBatteryMaxPercent);
         SeekBar magnitudeSensorSeek = findViewById(R.id.sensorMagnitudeValue);
         SeekBar minPercentSeek = findViewById(R.id.percentValue);
         SeekBar maxPercentSeek = findViewById(R.id.percentMaxValue);
         SeekBar maxBatteryPercentSeek = findViewById(R.id.percentBatteryMaxValue);
         SeekBar updateFrequencySeek = findViewById(R.id.updateFrequencyValue);
+        SeekBar previewTimeSeek = findViewById(R.id.previewTimeValue);
         Switch registerSwitch = findViewById(R.id.switchAuto);
         Switch registerSunSwitch = findViewById(R.id.switchAutoSun);
 
@@ -70,6 +75,7 @@ public class SettingsActivity extends Activity {
         maxBatteryLastPercentValue = prefs.getInt(MainActivity.MAX_BATTERY_PERCENT_VALUE, 100);
         lastMagnitudeSensorValue = prefs.getInt(MainActivity.MAGNITUDE_SENSOR_VALUE, 10);
         updateFrequencyValue = prefs.getInt(MainActivity.FREQUENCY_VALUE, 4);
+        previewTimeValue = prefs.getInt(MainActivity.PREVIEW_TIME_ACTIVE, 300);
 
         updateTextValues();
 
@@ -79,6 +85,27 @@ public class SettingsActivity extends Activity {
             @Override
             public void onProgressChanged(SeekBar seekBar, int position, boolean b) {
                 updateFrequencyValue = position;
+                updateTextValues();
+                savePreferences();
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
+            }
+        });
+
+        previewTimeSeek.setMax(300);
+        previewTimeSeek.setProgress(previewTimeValue - 60);
+        previewTimeSeek.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int position, boolean b) {
+                previewTimeValue = position + 60;
                 updateTextValues();
                 savePreferences();
             }
@@ -275,6 +302,7 @@ public class SettingsActivity extends Activity {
         edit.putBoolean(MainActivity.BATTERY_LOW, lowPowerEnabled);
         edit.putInt(MainActivity.MAGNITUDE_SENSOR_VALUE, this.lastMagnitudeSensorValue);
         edit.putInt(MainActivity.FREQUENCY_VALUE, this.updateFrequencyValue);
+        edit.putInt(MainActivity.PREVIEW_TIME_ACTIVE, this.previewTimeValue);
         edit.apply();
     }
 }

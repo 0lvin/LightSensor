@@ -4,7 +4,7 @@
     <string name="sensor_light">Сенсор:</string>
     <string name="camera_light">Камера:</string>
     <string name="camera_preview">превью камери</string>
-    <string name="license_text">Розроблено Denis Pauk aka 0lvin та Mitrand, 2015–2017. Лицензовано під GPL2. Може бути викорастано як завгодно в межах здорового глузду.</string>
+    <string name="license_text">Лицензовано під GPL2. Може бути викорастано як завгодно в межах здорового глузду.</string>
     <string name="used_back_camera">Використовуется задня камера</string>
     <string name="used_front_camera">Використовуется фронтальна камера</string>
     <string name="used_light_sensor">Використовуется сенсор світла</string>
@@ -38,4 +38,7 @@
     <string name="low_battery">Низький рівень заряду батареї:</string>
     <string name="updateFrequencyTitle">Частота оновлення яскравості.</string>
     <string name="low_power_enabled">Cпоживання мінімізовано</string>
+    <string name="preview_active_seconds">Попередній перегляд буде зупинено через</string>
+    <string name="preview_stoped_some_time">Попередній перегляд зупинено, натисніть на попередній перегляд для резюме.</string>
+    <string name="previewTimeTitle">Час попереднього перегляду, секунди</string>
 </resources>

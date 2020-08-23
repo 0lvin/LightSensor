@@ -26,6 +26,7 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.TextureView;
+import android.view.View;
 import android.view.ViewGroup.LayoutParams;
 import android.widget.ProgressBar;
 import android.widget.SeekBar;
@@ -39,14 +40,11 @@ import java.util.regex.Pattern;
 public class MainActivity extends Activity implements TextureView.SurfaceTextureListener, Camera.PreviewCallback, Camera.AutoFocusCallback {
 
     final static String PREFERENCES_NAME = "preferences";
-    private final static String MAGNITUDE_VALUE = "MagnitudeValue";
     final static String MAGNITUDE_SENSOR_VALUE = "MagnitudeSensorValue";
     final static String MIN_PERCENT_VALUE = "PercentValue";
     final static String MAX_PERCENT_VALUE = "MaxPercentValue";
     final static String MAX_BATTERY_PERCENT_VALUE = "MaxBatteryPercentValue";
     final static String BATTERY_LOW = "BatteryLowUsed";
-    private final static String RUNTIME_VALUE = "LastRunTime";
-    private final static String EVENTS_NAME = "LightsSensors";
     final static String AUTO_VALUE = "AutoUpdateOnEvent";
     final static String AUTO_SUN_VALUE = "AutoUpdateOnEventSun";
     final static String DISABLE_CHANGE_BRIGHTNESS = "DisableChangeBrightness";
@@ -54,10 +52,14 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
     final static String USE_MONO_PREVIEW = "MonoPreviewOnly";
     final static String DISABLE_CAMERA = "DisableCamera";
     final static String USE_BACK_CAMERA = "UseBackCamera";
-    private final static String ALTITUDE_VALUE = "AltitudeValue";
     final static String LONGITUDE_VALUE = "LongitudeValue";
     final static String LATITUDE_VALUE = "LatitudeValue";
     final static String FREQUENCY_VALUE = "UpdateFrequencyValue";
+    final static String PREVIEW_TIME_ACTIVE = "PreviewTimeActive";
+    private final static String MAGNITUDE_VALUE = "MagnitudeValue";
+    private final static String RUNTIME_VALUE = "LastRunTime";
+    private final static String EVENTS_NAME = "LightsSensors";
+    private final static String ALTITUDE_VALUE = "AltitudeValue";
     private final static int IWANTCAMERA = 1;
     private final static int IWANTCHANGESETTINGS = 2;
     private final static int IWANTLOCATION = 3;
@@ -66,6 +68,8 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
     private long lastUpdateTimeMillisecondsStamp = 0;
     private SensorEventListener lightsSensorListener = null;
     private SensorManager sensorManager = null;
+    private int activeTimeLeft = 60;
+    private int activeTimeLeftBase = 60;
     private int lastBrightnessValue = 0;
     private int lastMagnitudeValue = 10;
     private int lastMagnitudeSensorValue = 10;
@@ -404,6 +408,8 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
         minPercentValueSettings = prefs.getInt(MIN_PERCENT_VALUE, 0);
         maxPercentValueSettings = prefs.getInt(MAX_PERCENT_VALUE, 100);
         updateFrequencyValue = prefs.getInt(FREQUENCY_VALUE, 4);
+        activeTimeLeft = prefs.getInt(PREVIEW_TIME_ACTIVE, 60);
+        activeTimeLeftBase = prefs.getInt(PREVIEW_TIME_ACTIVE, 60);
 
         if (prefs.getBoolean(BATTERY_LOW, false)) {
             int maxBatteryPercentValue = prefs.getInt(MainActivity.MAX_BATTERY_PERCENT_VALUE, 100);
@@ -560,9 +566,9 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
 
     @Override
     protected void onPause() {
+        super.onPause();
         Date current = new Date();
         long newTimeValue = this.lastTime + (current.getTime() - this.startTime.getTime()) / 1000;
-        super.onPause();
         if (lightsSensorListener != null && sensorManager != null) {
             sensorManager.unregisterListener(lightsSensorListener);
         }
@@ -642,6 +648,7 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
         long newTime = current.getTime() / 1000;
         if (lastUpdate == newTime)
             return;
+        activeTimeLeft--;
         lastUpdate = newTime;
         Long usedSeconds = this.lastTime % 60;
         Long usedMinutes = (this.lastTime / 60) % 60;
@@ -665,7 +672,26 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
             textCameraLight.setText(cameraText + String.format("%.1f", (float) light_value_lux));
         }
         textMagnitude.setText(getMagnitude() + "x");
-        String stateText = getString(R.string.license_text) + "\n";
+        String stateText = "";
+        if (activeTimeLeft > 0) {
+            stateText += getString(R.string.preview_active_seconds) + " " + activeTimeLeft + " " + getString(R.string.seconds) + ".\n";
+        } else {
+            stateText += getString(R.string.preview_stoped_some_time) + "\n";
+            deleteCamera();
+            preview.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    if (!dontUseCamera) {
+                        initCamera(useMonoPreview);
+                        recreatePreview();
+                        preview.setOnClickListener(null);
+                        activeTimeLeft = activeTimeLeftBase;
+                    }
+
+                }
+            });
+        }
+        stateText += getString(R.string.license_text) + "\n";
         if (this.useFootCandle) {
             stateText += getString(R.string.used_foot_candle) + "\n";
         } else {
@@ -795,7 +821,6 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
 
             }
         };
-
     }
 
     @Override
