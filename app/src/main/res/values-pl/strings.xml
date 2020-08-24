@@ -36,9 +36,9 @@
     <string name="magnitudeSensorTitle">Zwiększ wartość dla czujnika światła</string>
     <string name="maxBatteryPercentTitle">Maksymalna jasność przy niskiej baterii.</string>
     <string name="low_battery">Niski poziom naładowania baterii:</string>
-    <string name="updateFrequencyTitle">Częstotliwość aktualizacji jasności.</string>
+    <string name="updateFrequencyTitle">Częstotliwość aktualizacji jasności</string>
     <string name="low_power_enabled">Zużycie zminimalizowane</string>
     <string name="preview_active_seconds">Podgląd zostanie zatrzymany za</string>
-    <string name="preview_stoped_some_time">Podgląd został zatrzymany, kliknij podgląd, aby wznowić.</string>
-    <string name="previewTimeTitle">Czas oczekiwania na podgląd w sekundach</string>
+    <string name="preview_stopped_some_time">Podgląd został zatrzymany, kliknij podgląd, aby wznowić.</string>
+    <string name="previewTimeTitle">Czas podglądu</string>
 </resources>

@@ -16,6 +16,8 @@ public class SettingsActivity extends Activity {
     private TextView sensorTextPercent;
     private TextView updateFrequencyText;
     private TextView previewTimeText;
+    private TextView previewTimeTitle;
+    private TextView updateFrequencyTitle;
     private int lastMagnitudeSensorValue = 10;
     private int minLastPercentValue = 0;
     private int maxLastPercentValue = 100;
@@ -36,11 +38,18 @@ public class SettingsActivity extends Activity {
         maxTextPercent.setText(maxLastPercentValue + "%");
         maxBatteryTextPercent.setText(maxBatteryLastPercentValue + "%");
         sensorTextPercent.setText(((float) lastMagnitudeSensorValue + 10) / 20 + "x");
+        updateFrequencyTitle.setText(getString(R.string.updateFrequencyTitle) + ", " + getString(R.string.seconds));
         updateFrequencyText.setText(String.format(
                 getString(denis.develops.utils.lightsensor.R.string.update_in_second),
                 (float) (1 << (4 + updateFrequencyValue)) / 1024
         ));
-        previewTimeText.setText(Integer.toString(previewTimeValue));
+        if (previewTimeValue < 6) {
+            previewTimeTitle.setText(getString(R.string.previewTimeTitle) + ", " + getString(R.string.minutes));
+            previewTimeText.setText(Integer.toString(1 << previewTimeValue));
+        } else {
+            previewTimeTitle.setText(getString(R.string.previewTimeTitle) + ", " + getString(R.string.hours));
+            previewTimeText.setText(Integer.toString((1 << previewTimeValue) / 60));
+        }
     }
 
     @Override
@@ -51,7 +60,9 @@ public class SettingsActivity extends Activity {
         minTextPercent = findViewById(R.id.textPercent);
         maxTextPercent = findViewById(R.id.textMaxPercent);
         updateFrequencyText = findViewById(R.id.textUpdateFrequency);
+        updateFrequencyTitle = findViewById(R.id.textUpdateFrequencyTitle);
         previewTimeText = findViewById(R.id.textPreviewTime);
+        previewTimeTitle = findViewById(R.id.textPreviewTimeTitle);
         maxBatteryTextPercent = findViewById(R.id.textBatteryMaxPercent);
         SeekBar magnitudeSensorSeek = findViewById(R.id.sensorMagnitudeValue);
         SeekBar minPercentSeek = findViewById(R.id.percentValue);
@@ -100,12 +111,12 @@ public class SettingsActivity extends Activity {
             }
         });
 
-        previewTimeSeek.setMax(300);
-        previewTimeSeek.setProgress(previewTimeValue - 60);
+        previewTimeSeek.setMax(12);
+        previewTimeSeek.setProgress(previewTimeValue);
         previewTimeSeek.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int position, boolean b) {
-                previewTimeValue = position + 60;
+                previewTimeValue = position;
                 updateTextValues();
                 savePreferences();
             }

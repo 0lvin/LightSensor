@@ -69,7 +69,7 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
     private SensorEventListener lightsSensorListener = null;
     private SensorManager sensorManager = null;
     private int activeTimeLeft = 60;
-    private int activeTimeLeftBase = 60;
+    private long activeTimeLeftBase = 0;
     private int lastBrightnessValue = 0;
     private int lastMagnitudeValue = 10;
     private int lastMagnitudeSensorValue = 10;
@@ -402,14 +402,15 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
     @Override
     protected void onResume() {
         super.onResume();
+        Date current = new Date();
         SharedPreferences prefs = getSharedPreferences(PREFERENCES_NAME, MODE_PRIVATE);
         useFootCandle = prefs.getBoolean(USE_FOOT_CANDLE_FOR_SHOW, false);
         useMonoPreview = prefs.getBoolean(USE_MONO_PREVIEW, true);
         minPercentValueSettings = prefs.getInt(MIN_PERCENT_VALUE, 0);
         maxPercentValueSettings = prefs.getInt(MAX_PERCENT_VALUE, 100);
         updateFrequencyValue = prefs.getInt(FREQUENCY_VALUE, 4);
-        activeTimeLeft = prefs.getInt(PREVIEW_TIME_ACTIVE, 60);
-        activeTimeLeftBase = prefs.getInt(PREVIEW_TIME_ACTIVE, 60);
+        activeTimeLeft = (1 << prefs.getInt(PREVIEW_TIME_ACTIVE, 1)) * 60;
+        activeTimeLeftBase = current.getTime() / 1000;;
 
         if (prefs.getBoolean(BATTERY_LOW, false)) {
             int maxBatteryPercentValue = prefs.getInt(MainActivity.MAX_BATTERY_PERCENT_VALUE, 100);
@@ -564,16 +565,19 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
         edit.apply();
     }
 
+    private void destroyLightSensor() {
+        if (lightsSensorListener != null && sensorManager != null) {
+            sensorManager.unregisterListener(lightsSensorListener);
+        }
+        sensorManager = null;
+    }
+
     @Override
     protected void onPause() {
         super.onPause();
         Date current = new Date();
         long newTimeValue = this.lastTime + (current.getTime() - this.startTime.getTime()) / 1000;
-        if (lightsSensorListener != null && sensorManager != null) {
-            sensorManager.unregisterListener(lightsSensorListener);
-        }
-        lightsSensorListener = null;
-        sensorManager = null;
+        this.destroyLightSensor();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (checkSelfPermission(android.Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
                 if (locationListener != null) {
@@ -648,7 +652,6 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
         long newTime = current.getTime() / 1000;
         if (lastUpdate == newTime)
             return;
-        activeTimeLeft--;
         lastUpdate = newTime;
         Long usedSeconds = this.lastTime % 60;
         Long usedMinutes = (this.lastTime / 60) % 60;
@@ -673,21 +676,36 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
         }
         textMagnitude.setText(getMagnitude() + "x");
         String stateText = "";
-        if (activeTimeLeft > 0) {
-            stateText += getString(R.string.preview_active_seconds) + " " + activeTimeLeft + " " + getString(R.string.seconds) + ".\n";
+        long time_left = (activeTimeLeftBase + activeTimeLeft) - newTime;
+        if (time_left > 0) {
+            stateText += getString(R.string.preview_active_seconds) + " ";
+            if (time_left < 120) {
+                stateText += time_left + " " + getString(R.string.seconds) + ".\n";
+            } else if (time_left < 3600 ){
+                stateText += (int)(time_left / 60) + " " + getString(R.string.minutes) + ".\n";
+            } else {
+                stateText += (int)(time_left / 3600) + " " + getString(R.string.hours) + ".\n";
+            }
         } else {
-            stateText += getString(R.string.preview_stoped_some_time) + "\n";
+            stateText += getString(R.string.preview_stopped_some_time) + "\n";
+            // disable camera sensor
             deleteCamera();
+            // disable lights sensor
+            destroyLightSensor();
             preview.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
+                    Date current = new Date();
+                    activeTimeLeftBase = current.getTime() / 1000;
+                    preview.setOnClickListener(null);
+
                     if (!dontUseCamera) {
                         initCamera(useMonoPreview);
                         recreatePreview();
-                        preview.setOnClickListener(null);
-                        activeTimeLeft = activeTimeLeftBase;
                     }
 
+                    // restore light sensor
+                    initLightSensor();
                 }
             });
         }

@@ -36,9 +36,9 @@
     <string name="magnitudeSensorTitle">Павялічыць значэнне для датчыка святла ў</string>
     <string name="maxBatteryPercentTitle">Максімальнае значэнне яркасці на нізкім узроўні зарада батарэі.</string>
     <string name="low_battery">Нізкі ўзровень зарада батарэі:</string>
-    <string name="updateFrequencyTitle">Частата абнаўлення яркасці.</string>
+    <string name="updateFrequencyTitle">Частата абнаўлення яркасці</string>
     <string name="low_power_enabled">Cпажыванне мінімізавана</string>
     <string name="preview_active_seconds">Папярэдні прагляд будзе спынены</string>
-    <string name="preview_stoped_some_time">Папярэдні прагляд спынены, націсніце для папярэдняга прагляду.</string>
-    <string name="previewTimeTitle">Папярэдні прагляд, секунд</string>
+    <string name="preview_stopped_some_time">Папярэдні прагляд спынены, націсніце для папярэдняга прагляду.</string>
+    <string name="previewTimeTitle">Папярэдні прагляд</string>
 </resources>

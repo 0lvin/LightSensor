@@ -36,9 +36,9 @@
     <string name="magnitudeSensorTitle">Увеличить значение для датчика света в</string>
     <string name="maxBatteryPercentTitle">Максимальное значение яркости при разряженной батарее.</string>
     <string name="low_battery">Низкий уровень заряда батареи:</string>
-    <string name="updateFrequencyTitle">Частота обновления яркости.</string>
+    <string name="updateFrequencyTitle">Частота обновления яркости</string>
     <string name="low_power_enabled">Потребление минимизировано</string>
     <string name="preview_active_seconds">Предварительный просмотр будет остановлен через</string>
-    <string name="preview_stoped_some_time">Предварительный просмотр остановлен, нажмите на предварительный просмотр, чтобы продолжить.</string>
-    <string name="previewTimeTitle">Тайм-аут предварительного просмотра, секунды</string>
+    <string name="preview_stopped_some_time">Предварительный просмотр остановлен, нажмите на предварительный просмотр, чтобы продолжить.</string>
+    <string name="previewTimeTitle">Тайм-аут предварительного просмотра</string>
 </resources>
