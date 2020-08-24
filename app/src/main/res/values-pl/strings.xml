@@ -10,6 +10,7 @@
     <string name="used_light_sensor">Używane czujnik światła.</string>
     <string name="sensor_not_exist">żadne czujniki</string>
     <string name="have_used_for">Korzystać</string>
+    <string name="days">dni</string>
     <string name="hours">godzin</string>
     <string name="minutes">minut</string>
     <string name="seconds">sekund</string>
@@ -41,4 +42,7 @@
     <string name="preview_active_seconds">Podgląd zostanie zatrzymany za</string>
     <string name="preview_stopped_some_time">Podgląd został zatrzymany, kliknij podgląd, aby wznowić.</string>
     <string name="previewTimeTitle">Czas podglądu</string>
+    <string name="preview_second">60</string>
+    <string name="cameraExposureTitle">Ekspozycja aparatu</string>
+    <string name="exposure_value">1</string>
 </resources>

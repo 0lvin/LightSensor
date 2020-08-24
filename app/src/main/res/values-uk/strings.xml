@@ -10,6 +10,7 @@
     <string name="used_light_sensor">Використовуется сенсор світла</string>
     <string name="sensor_not_exist">немає</string>
     <string name="have_used_for">Використовувалося</string>
+    <string name="days">днів</string>
     <string name="hours">годин</string>
     <string name="minutes">хвилин</string>
     <string name="seconds">секунд</string>
@@ -41,4 +42,7 @@
     <string name="preview_active_seconds">Попередній перегляд буде зупинено через</string>
     <string name="preview_stopped_some_time">Попередній перегляд зупинено, натисніть на попередній перегляд для резюме.</string>
     <string name="previewTimeTitle">Час попереднього перегляду</string>
+    <string name="preview_second">60</string>
+    <string name="cameraExposureTitle">Експозиція камери</string>
+    <string name="exposure_value">1</string>
 </resources>

@@ -14,13 +14,15 @@ public class SettingsActivity extends Activity {
     private TextView maxTextPercent;
     private TextView maxBatteryTextPercent;
     private TextView sensorTextPercent;
+    private TextView cameraExposureText;
     private TextView updateFrequencyText;
     private TextView previewTimeText;
     private TextView previewTimeTitle;
     private TextView updateFrequencyTitle;
     private int lastMagnitudeSensorValue = 10;
-    private int minLastPercentValue = 0;
-    private int maxLastPercentValue = 100;
+    private int cameraExposureValue = 0;
+    private int minPercentValue = 0;
+    private int maxPercentValue = 100;
     private int maxBatteryLastPercentValue = 100;
     private boolean serviceEnabled = false;
     private boolean useBack = false;
@@ -34,8 +36,9 @@ public class SettingsActivity extends Activity {
     private int previewTimeValue = 1;
 
     private void updateTextValues() {
-        minTextPercent.setText(minLastPercentValue + "%");
-        maxTextPercent.setText(maxLastPercentValue + "%");
+        cameraExposureText.setText(Integer.toString(cameraExposureValue));
+        minTextPercent.setText(minPercentValue + "%");
+        maxTextPercent.setText(maxPercentValue + "%");
         maxBatteryTextPercent.setText(maxBatteryLastPercentValue + "%");
         sensorTextPercent.setText(((float) lastMagnitudeSensorValue + 10) / 20 + "x");
         updateFrequencyTitle.setText(getString(R.string.updateFrequencyTitle) + ", " + getString(R.string.seconds));
@@ -46,9 +49,12 @@ public class SettingsActivity extends Activity {
         if (previewTimeValue < 6) {
             previewTimeTitle.setText(getString(R.string.previewTimeTitle) + ", " + getString(R.string.minutes));
             previewTimeText.setText(Integer.toString(1 << previewTimeValue));
-        } else {
+        } else if (previewTimeValue < 11) {
             previewTimeTitle.setText(getString(R.string.previewTimeTitle) + ", " + getString(R.string.hours));
             previewTimeText.setText(Integer.toString((1 << previewTimeValue) / 60));
+        } else {
+            previewTimeTitle.setText(getString(R.string.previewTimeTitle) + ", " + getString(R.string.days));
+            previewTimeText.setText(Integer.toString((1 << previewTimeValue) / 60 / 24));
         }
     }
 
@@ -61,6 +67,7 @@ public class SettingsActivity extends Activity {
         maxTextPercent = findViewById(R.id.textMaxPercent);
         updateFrequencyText = findViewById(R.id.textUpdateFrequency);
         updateFrequencyTitle = findViewById(R.id.textUpdateFrequencyTitle);
+        cameraExposureText = findViewById(R.id.textCameraExposure);
         previewTimeText = findViewById(R.id.textPreviewTime);
         previewTimeTitle = findViewById(R.id.textPreviewTimeTitle);
         maxBatteryTextPercent = findViewById(R.id.textBatteryMaxPercent);
@@ -70,6 +77,7 @@ public class SettingsActivity extends Activity {
         SeekBar maxBatteryPercentSeek = findViewById(R.id.percentBatteryMaxValue);
         SeekBar updateFrequencySeek = findViewById(R.id.updateFrequencyValue);
         SeekBar previewTimeSeek = findViewById(R.id.previewTimeValue);
+        SeekBar cameraExposureSeek = findViewById(R.id.cameraExposureValue);
         Switch registerSwitch = findViewById(R.id.switchAuto);
         Switch registerSunSwitch = findViewById(R.id.switchAutoSun);
 
@@ -81,8 +89,9 @@ public class SettingsActivity extends Activity {
         Switch lowPowerSwitch = findViewById(R.id.low_power_enabled);
 
         SharedPreferences prefs = getSharedPreferences(MainActivity.PREFERENCES_NAME, MODE_PRIVATE);
-        minLastPercentValue = prefs.getInt(MainActivity.MIN_PERCENT_VALUE, 0);
-        maxLastPercentValue = prefs.getInt(MainActivity.MAX_PERCENT_VALUE, 100);
+        cameraExposureValue = prefs.getInt(MainActivity.CAMERA_EXPOSURE, 1);
+        minPercentValue = prefs.getInt(MainActivity.MIN_PERCENT_VALUE, 0);
+        maxPercentValue = prefs.getInt(MainActivity.MAX_PERCENT_VALUE, 100);
         maxBatteryLastPercentValue = prefs.getInt(MainActivity.MAX_BATTERY_PERCENT_VALUE, 100);
         lastMagnitudeSensorValue = prefs.getInt(MainActivity.MAGNITUDE_SENSOR_VALUE, 10);
         updateFrequencyValue = prefs.getInt(MainActivity.FREQUENCY_VALUE, 4);
@@ -111,7 +120,7 @@ public class SettingsActivity extends Activity {
             }
         });
 
-        previewTimeSeek.setMax(12);
+        previewTimeSeek.setMax(17);
         previewTimeSeek.setProgress(previewTimeValue);
         previewTimeSeek.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
@@ -154,11 +163,32 @@ public class SettingsActivity extends Activity {
         });
 
         minPercentSeek.setMax(70);
-        minPercentSeek.setProgress(minLastPercentValue + 10);
+        minPercentSeek.setProgress(minPercentValue + 10);
         minPercentSeek.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int position, boolean b) {
-                minLastPercentValue = position - 10;
+                minPercentValue = position - 10;
+                savePreferences();
+                updateTextValues();
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
+            }
+        });
+
+        cameraExposureSeek.setMax(20);
+        cameraExposureSeek.setProgress(cameraExposureValue + 10);
+        cameraExposureSeek.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int position, boolean b) {
+                cameraExposureValue = position - 10;
                 savePreferences();
                 updateTextValues();
             }
@@ -175,11 +205,11 @@ public class SettingsActivity extends Activity {
         });
 
         maxPercentSeek.setMax(40);
-        maxPercentSeek.setProgress(Math.max(maxLastPercentValue - 70, 0));
+        maxPercentSeek.setProgress(Math.max(maxPercentValue - 70, 0));
         maxPercentSeek.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int position, boolean b) {
-                maxLastPercentValue = position + 70;
+                maxPercentValue = position + 70;
                 savePreferences();
                 updateTextValues();
             }
@@ -304,8 +334,9 @@ public class SettingsActivity extends Activity {
         edit.putBoolean(MainActivity.AUTO_SUN_VALUE, sunServiceEnabled);
         edit.putBoolean(MainActivity.USE_FOOT_CANDLE_FOR_SHOW, useFootCandle);
         edit.putBoolean(MainActivity.USE_MONO_PREVIEW, useMonoPreview);
-        edit.putInt(MainActivity.MIN_PERCENT_VALUE, this.minLastPercentValue);
-        edit.putInt(MainActivity.MAX_PERCENT_VALUE, this.maxLastPercentValue);
+        edit.putInt(MainActivity.CAMERA_EXPOSURE, this.cameraExposureValue);
+        edit.putInt(MainActivity.MIN_PERCENT_VALUE, this.minPercentValue);
+        edit.putInt(MainActivity.MAX_PERCENT_VALUE, this.maxPercentValue);
         edit.putInt(MainActivity.MAX_BATTERY_PERCENT_VALUE, this.maxBatteryLastPercentValue);
         edit.putBoolean(MainActivity.DISABLE_CHANGE_BRIGHTNESS, cannotChangeBrightness);
         edit.putBoolean(MainActivity.USE_BACK_CAMERA, useBack);

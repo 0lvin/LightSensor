@@ -10,6 +10,7 @@
     <string name="used_front_camera">Используется фронтальная камера</string>
     <string name="used_light_sensor">Используется сенсор освещения </string>
     <string name="have_used_for">Использовалось</string>
+    <string name="days">дней</string>
     <string name="hours">часов</string>
     <string name="minutes">минут</string>
     <string name="seconds">секунд</string>
@@ -41,4 +42,7 @@
     <string name="preview_active_seconds">Предварительный просмотр будет остановлен через</string>
     <string name="preview_stopped_some_time">Предварительный просмотр остановлен, нажмите на предварительный просмотр, чтобы продолжить.</string>
     <string name="previewTimeTitle">Тайм-аут предварительного просмотра</string>
+    <string name="preview_second">60</string>
+    <string name="cameraExposureTitle">Экспозиция камеры</string>
+    <string name="exposure_value">1</string>
 </resources>

@@ -50,6 +50,7 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
     final static String DISABLE_CHANGE_BRIGHTNESS = "DisableChangeBrightness";
     final static String USE_FOOT_CANDLE_FOR_SHOW = "FootCandle";
     final static String USE_MONO_PREVIEW = "MonoPreviewOnly";
+    final static String CAMERA_EXPOSURE = "CameraExposure";
     final static String DISABLE_CAMERA = "DisableCamera";
     final static String USE_BACK_CAMERA = "UseBackCamera";
     final static String LONGITUDE_VALUE = "LongitudeValue";
@@ -105,7 +106,8 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
     private TextView textMagnitude;
     private Date startTime;
     private long lastTime;
-    private long lastUpdate = 0;
+    private long lastUpdate;
+    private int cameraExposure;
     // location
     private LocationListener locationListener = null;
     private float locationAltitude = 0;
@@ -320,7 +322,13 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
                 if (params.isAutoExposureLockSupported()) {
                     try {
                         params.setAutoExposureLock(true);
-                        params.setExposureCompensation(1);
+                        if (cameraExposure > params.getMaxExposureCompensation()) {
+                            cameraExposure = params.getMaxExposureCompensation();
+                        }
+                        if (cameraExposure < params.getMinExposureCompensation()) {
+                            cameraExposure = params.getMinExposureCompensation();
+                        }
+                        params.setExposureCompensation(cameraExposure);
                         camera.setParameters(params);
                     } catch (Exception e) {
                         params = camera.getParameters();
@@ -406,11 +414,13 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
         SharedPreferences prefs = getSharedPreferences(PREFERENCES_NAME, MODE_PRIVATE);
         useFootCandle = prefs.getBoolean(USE_FOOT_CANDLE_FOR_SHOW, false);
         useMonoPreview = prefs.getBoolean(USE_MONO_PREVIEW, true);
+        cameraExposure = prefs.getInt(CAMERA_EXPOSURE, 1);
         minPercentValueSettings = prefs.getInt(MIN_PERCENT_VALUE, 0);
         maxPercentValueSettings = prefs.getInt(MAX_PERCENT_VALUE, 100);
         updateFrequencyValue = prefs.getInt(FREQUENCY_VALUE, 4);
         activeTimeLeft = (1 << prefs.getInt(PREVIEW_TIME_ACTIVE, 1)) * 60;
-        activeTimeLeftBase = current.getTime() / 1000;;
+        activeTimeLeftBase = current.getTime() / 1000;
+        ;
 
         if (prefs.getBoolean(BATTERY_LOW, false)) {
             int maxBatteryPercentValue = prefs.getInt(MainActivity.MAX_BATTERY_PERCENT_VALUE, 100);
@@ -559,6 +569,7 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
         edit.putFloat(ALTITUDE_VALUE, this.locationAltitude);
         edit.putFloat(LATITUDE_VALUE, this.locationLatitude);
         edit.putFloat(LONGITUDE_VALUE, this.locationLongitude);
+        edit.putInt(CAMERA_EXPOSURE, cameraExposure);
         if (newTimeValue > 0) {
             edit.putLong(RUNTIME_VALUE, newTimeValue);
         }
@@ -681,10 +692,12 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
             stateText += getString(R.string.preview_active_seconds) + " ";
             if (time_left < 120) {
                 stateText += time_left + " " + getString(R.string.seconds) + ".\n";
-            } else if (time_left < 3600 ){
-                stateText += (int)(time_left / 60) + " " + getString(R.string.minutes) + ".\n";
+            } else if (time_left < 3600) {
+                stateText += (int) (time_left / 60) + " " + getString(R.string.minutes) + ".\n";
+            } else if (time_left < (3600 * 24 * 2)) {
+                stateText += (int) (time_left / 3600) + " " + getString(R.string.hours) + ".\n";
             } else {
-                stateText += (int)(time_left / 3600) + " " + getString(R.string.hours) + ".\n";
+                stateText += (int) (time_left / (3600 * 24)) + " " + getString(R.string.days) + ".\n";
             }
         } else {
             stateText += getString(R.string.preview_stopped_some_time) + "\n";
