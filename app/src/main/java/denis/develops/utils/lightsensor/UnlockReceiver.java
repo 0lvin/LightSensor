@@ -49,6 +49,7 @@ public class UnlockReceiver extends BroadcastReceiver {
         }
 
         // Version O has issues with broadcast receivers, register our hack for such
+        /*
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             try {
                 AlarmManager alarmMgr = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
@@ -58,7 +59,7 @@ public class UnlockReceiver extends BroadcastReceiver {
             } catch (Exception e) {
                 Log.e(EVENTS_NAME, "Cannot register alarm receiver:" + e.toString());
             }
-        }
+        }*/
     }
 
     public static double getSunsetTime(boolean sunrise, double longitude, double latitude) {
