@@ -330,7 +330,7 @@ int v4l_mmap_frame(int fd, char ** image_memmory, int * buf_length) {
 	if (MAP_FAILED == image_memmory) {
 		return -1;
 	}
-	printf("mmaped %d bytes\n", *buf_length);
+	printf("maped %d bytes\n", *buf_length);
 	return 0;
 }
 
@@ -414,7 +414,7 @@ int main() {
 		if (!get_status(dev_fd))
 			enable_sensor(dev_fd, 1);
 	} else {
-		printf("Light sensor swith has not found.\n");
+		printf("Light sensor switch has not found.\n");
 	}
 	double sum_light = 0;
 	int count_light = 0;

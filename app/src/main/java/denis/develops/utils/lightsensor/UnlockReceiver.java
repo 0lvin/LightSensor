@@ -22,46 +22,6 @@ public class UnlockReceiver extends BroadcastReceiver {
     public UnlockReceiver() {
     }
 
-    public void registerReceivers(Context context) {
-        try {
-            Log.i(EVENTS_NAME, "Register unlock receiver.");
-            final IntentFilter theFilter = new IntentFilter();
-            /* System Defined Broadcast */
-            theFilter.addAction(Intent.ACTION_SCREEN_ON);
-            theFilter.addAction(Intent.ACTION_USER_PRESENT);
-
-            context.registerReceiver(this, theFilter);
-
-        } catch (Exception e) {
-            Log.e(EVENTS_NAME, "Cannot register unlock receiver:" + e.toString());
-        }
-
-        try {
-            // enable service on system level
-            ComponentName receiver = new ComponentName(context, UnlockReceiver.class);
-            PackageManager pm = context.getPackageManager();
-
-            pm.setComponentEnabledSetting(receiver,
-                    PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
-                    PackageManager.DONT_KILL_APP);
-        } catch (Exception e) {
-            Log.e(EVENTS_NAME, "Cannot register package:" + e.toString());
-        }
-
-        // Version O has issues with broadcast receivers, register our hack for such
-        /*
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            try {
-                AlarmManager alarmMgr = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
-                Intent intent = new Intent(context, UnlockReceiver.class);
-                PendingIntent alarmIntent = PendingIntent.getBroadcast(context, 0, intent, 0);
-                alarmMgr.setInexactRepeating(AlarmManager.RTC, 0, AlarmManager.INTERVAL_HALF_HOUR, alarmIntent);
-            } catch (Exception e) {
-                Log.e(EVENTS_NAME, "Cannot register alarm receiver:" + e.toString());
-            }
-        }*/
-    }
-
     public static double getSunsetTime(boolean sunrise, double longitude, double latitude) {
         Calendar curCalendar = Calendar.getInstance();
 
@@ -153,6 +113,46 @@ public class UnlockReceiver extends BroadcastReceiver {
         return UT;
     }
 
+    public void registerReceivers(Context context) {
+        try {
+            Log.i(EVENTS_NAME, "Register unlock receiver.");
+            final IntentFilter theFilter = new IntentFilter();
+            /* System Defined Broadcast */
+            theFilter.addAction(Intent.ACTION_SCREEN_ON);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.CUPCAKE) {
+                theFilter.addAction(Intent.ACTION_USER_PRESENT);
+            }
+
+            context.registerReceiver(this, theFilter);
+
+        } catch (Exception e) {
+            Log.e(EVENTS_NAME, "Cannot register unlock receiver:" + e.toString());
+        }
+
+        try {
+            // enable service on system level
+            ComponentName receiver = new ComponentName(context, UnlockReceiver.class);
+            PackageManager pm = context.getPackageManager();
+
+            pm.setComponentEnabledSetting(receiver,
+                    PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
+                    PackageManager.DONT_KILL_APP);
+        } catch (Exception e) {
+            Log.e(EVENTS_NAME, "Cannot register package:" + e.toString());
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.CUPCAKE) {
+            try {
+                AlarmManager alarmMgr = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+                Intent intent = new Intent(context, UnlockReceiver.class);
+                PendingIntent alarmIntent = PendingIntent.getBroadcast(context, 0, intent, 0);
+                alarmMgr.setInexactRepeating(AlarmManager.RTC, 0, AlarmManager.INTERVAL_HALF_HOUR, alarmIntent);
+            } catch (Exception e) {
+                Log.e(EVENTS_NAME, "Cannot register alarm receiver:" + e.toString());
+            }
+        }
+    }
+
     @Override
     public void onReceive(Context context, Intent intent) {
         // init alarms and broadcast
@@ -172,19 +172,23 @@ public class UnlockReceiver extends BroadcastReceiver {
         if (Intent.ACTION_BATTERY_LOW.equals(intent.getAction())) {
             SharedPreferences.Editor edit = prefs.edit();
             edit.putBoolean(MainActivity.BATTERY_LOW, true);
-            edit.apply();
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
+                edit.apply();
+            }
         } else if (Intent.ACTION_BATTERY_OKAY.equals(intent.getAction()) ||
                 Intent.ACTION_POWER_CONNECTED.equals(intent.getAction())) {
             SharedPreferences.Editor edit = prefs.edit();
             edit.putBoolean(MainActivity.BATTERY_LOW, false);
-            edit.apply();
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
+                edit.apply();
+            }
         }
 
         double summ_value = this.getLightByCalendar(prefs);
         boolean smooth_change = !(
                 Intent.ACTION_SCREEN_ON.equals(intent.getAction()) ||
-                Intent.ACTION_USER_PRESENT.equals(intent.getAction()) ||
-                Intent.ACTION_USER_UNLOCKED.equals(intent.getAction()));
+                        Intent.ACTION_USER_PRESENT.equals(intent.getAction()) ||
+                        Intent.ACTION_USER_UNLOCKED.equals(intent.getAction()));
         this.setBrightness(context, prefs, summ_value, smooth_change);
     }
 
@@ -204,8 +208,7 @@ public class UnlockReceiver extends BroadcastReceiver {
         try {
             double value = Math.min(summ_value + (minPercentValue * 256 / 100), (maxPercentValue * 256 / 100));
 
-            if (smooth)
-            {
+            if (smooth) {
                 Log.i(EVENTS_NAME, "Set smooth brightness to " + value);
                 value = (value + (double) Settings.System.getInt(context.getContentResolver(), Settings.System.SCREEN_BRIGHTNESS)) / 2;
             }
@@ -222,7 +225,7 @@ public class UnlockReceiver extends BroadcastReceiver {
         }
     }
 
-    private double getLightByCalendar(SharedPreferences prefs){
+    private double getLightByCalendar(SharedPreferences prefs) {
         boolean auto_change = prefs.getBoolean(MainActivity.AUTO_VALUE, false);
         boolean sun_change = prefs.getBoolean(MainActivity.AUTO_SUN_VALUE, false);
 

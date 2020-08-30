@@ -25,6 +25,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.SurfaceView;
 import android.view.TextureView;
 import android.view.View;
 import android.view.ViewGroup.LayoutParams;
@@ -89,7 +90,8 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
     private float lastCameraSensorValue = 0;
     private ProgressBar bar;
     private Camera camera = null;
-    private TextureView preview;
+    private TextureView previewTexture;
+    private SurfaceView previewSurface;
     private TextView textAuthor;
     private TextView textLightSensor;
     private boolean usedFront = false;
@@ -140,7 +142,11 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
     }
 
     private int[] getMinimalFps(Camera.Parameters params) {
-        List<int[]> fpsValue = params.getSupportedPreviewFpsRange();
+		List<int[]> fpsValue;
+        if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.GINGERBREAD) {
+            return null;
+        }
+        fpsValue = params.getSupportedPreviewFpsRange();
 
         int minFps = 0;
         int pos = 0;
@@ -200,6 +206,9 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
     }
 
     private Camera.Size getMinimalPreviewSize(Camera.Parameters params) {
+        if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.ECLAIR) {
+            return null;
+        }
         int minWidth = -1;
         List<Camera.Size> sizes = params.getSupportedPreviewSizes();
         for (int i = 0; i < sizes.size(); i++) {
@@ -220,6 +229,9 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
     }
 
     private int getFrontCameraId(CameraInfo info) {
+        if (android.os.Build.VERSION.SDK_INT < Build.VERSION_CODES.GINGERBREAD) {
+            return -1;
+        }
         //search front camera
         for (int i = 0; i < Camera.getNumberOfCameras(); i++) {
             Camera.getCameraInfo(i, info);
@@ -232,6 +244,9 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
     }
 
     private int getBackCameraId(CameraInfo info) {
+        if (android.os.Build.VERSION.SDK_INT < Build.VERSION_CODES.GINGERBREAD) {
+            return -1;
+        }
         for (int i = 0; i < Camera.getNumberOfCameras(); i++) {
             Camera.getCameraInfo(i, info);
             if (info.facing == CameraInfo.CAMERA_FACING_BACK) {
@@ -246,6 +261,9 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
         returned camera, front camera preferred
      */
     private int getCameraId() {
+        if (android.os.Build.VERSION.SDK_INT < Build.VERSION_CODES.GINGERBREAD) {
+            return -1;
+        }
         CameraInfo info = new CameraInfo();
         int camera_id;
         usedBack = false;
@@ -271,7 +289,7 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
             return;
 
         int cameraId = this.getCameraId();
-        if (cameraId != -1) {
+        if (cameraId != -1 && Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
             try {
                 camera = Camera.open(cameraId);
             } catch (Exception e) {
@@ -420,7 +438,6 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
         updateFrequencyValue = prefs.getInt(FREQUENCY_VALUE, 4);
         activeTimeLeft = (1 << prefs.getInt(PREVIEW_TIME_ACTIVE, 1)) * 60;
         activeTimeLeftBase = current.getTime() / 1000;
-        ;
 
         if (prefs.getBoolean(BATTERY_LOW, false)) {
             int maxBatteryPercentValue = prefs.getInt(MainActivity.MAX_BATTERY_PERCENT_VALUE, 100);
@@ -486,12 +503,14 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
         // available, and "onSurfaceTextureAvailable" will not be called. In that case, we can open
         // a camera and start preview from here (otherwise, we wait until the surface is ready in
         // the SurfaceTextureListener).
-        if (preview.isAvailable()) {
-            openCamera();
-        }
-        // fix texture listener
-        if (preview.getSurfaceTextureListener() != this) {
-            preview.setSurfaceTextureListener(this);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
+            if (previewTexture.isAvailable()) {
+                openCamera();
+            }
+            // fix texture listener
+            if (previewTexture.getSurfaceTextureListener() != this) {
+                previewTexture.setSurfaceTextureListener(this);
+            }
         }
     }
 
@@ -511,7 +530,9 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
                 } else {
                     edit.putBoolean(MainActivity.AUTO_SUN_VALUE, false);
                 }
-                edit.apply();
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
+					edit.apply();
+				}
                 break;
             }
             case IWANTCAMERA: {
@@ -526,7 +547,9 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
                 } else {
                     edit.putBoolean(MainActivity.DISABLE_CAMERA, true);
                 }
-                edit.apply();
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
+					edit.apply();
+				}
                 break;
             }
             case IWANTCHANGESETTINGS: {
@@ -546,7 +569,9 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
                         edit.putBoolean(MainActivity.DISABLE_CHANGE_BRIGHTNESS, true);
                     }
                 }
-                edit.apply();
+				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
+					edit.apply();
+				}
                 break;
             }
         }
@@ -573,11 +598,13 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
         if (newTimeValue > 0) {
             edit.putLong(RUNTIME_VALUE, newTimeValue);
         }
-        edit.apply();
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
+			edit.apply();
+		}
     }
 
     private void destroyLightSensor() {
-        if (lightsSensorListener != null && sensorManager != null) {
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.CUPCAKE && lightsSensorListener != null && sensorManager != null) {
             sensorManager.unregisterListener(lightsSensorListener);
         }
         sensorManager = null;
@@ -705,22 +732,24 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
             deleteCamera();
             // disable lights sensor
             destroyLightSensor();
-            preview.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    Date current = new Date();
-                    activeTimeLeftBase = current.getTime() / 1000;
-                    preview.setOnClickListener(null);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
+                previewTexture.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        Date current = new Date();
+                        activeTimeLeftBase = current.getTime() / 1000;
+                        previewTexture.setOnClickListener(null);
 
-                    if (!dontUseCamera) {
-                        initCamera(useMonoPreview);
-                        recreatePreview();
+                        if (!dontUseCamera) {
+                            initCamera(useMonoPreview);
+                            recreatePreview();
+                        }
+
+                        // restore light sensor
+                        initLightSensor();
                     }
-
-                    // restore light sensor
-                    initLightSensor();
-                }
-            });
+                });
+            }
         }
         stateText += getString(R.string.license_text) + "\n";
         if (this.useFootCandle) {
@@ -745,27 +774,29 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
         stateText += getString(R.string.low_battery) + " " + this.low_battery;
 
         textAuthor.setText(stateText);
-        if (dontUseCamera) {
-            preview.setAlpha(lastLightSensorValue / SensorManager.LIGHT_OVERCAST);
+        if (dontUseCamera && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.HONEYCOMB) {
+            previewTexture.setAlpha(lastLightSensorValue / SensorManager.LIGHT_OVERCAST);
         }
 
         bar.setProgress(lastBrightnessValue);
     }
 
     private void initLightSensor() {
-        // Obtain references to the SensorManager and the Light Sensor
-        sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
-        if (sensorManager != null) {
-            List<Sensor> sensors = sensorManager.getSensorList(Sensor.TYPE_LIGHT);
-            if (sensors.size() > 0) {
-                usedLightSensor = true;
-                final Sensor lightSensor = sensorManager.getDefaultSensor(Sensor.TYPE_LIGHT);
-                if (lightsSensorListener != null && sensorManager != null) {
-                    sensorManager.registerListener(
-                            lightsSensorListener, lightSensor, SensorManager.SENSOR_DELAY_NORMAL);
-                }
-            }
-        }
+		if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.CUPCAKE) {
+	        // Obtain references to the SensorManager and the Light Sensor
+	        sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
+	        if (sensorManager != null) {
+	            List<Sensor> sensors = sensorManager.getSensorList(Sensor.TYPE_LIGHT);
+	            if (sensors.size() > 0) {
+	                usedLightSensor = true;
+	                final Sensor lightSensor = sensorManager.getDefaultSensor(Sensor.TYPE_LIGHT);
+	                if (lightsSensorListener != null && sensorManager != null) {
+	                    sensorManager.registerListener(
+	                            lightsSensorListener, lightSensor, SensorManager.SENSOR_DELAY_NORMAL);
+	                }
+	            }
+	        }
+		}
     }
 
     @Override
@@ -781,7 +812,11 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
         bar = findViewById(R.id.brightnessValue);
         SeekBar magnitude_seek = findViewById(R.id.magnitudeValue);
 
-        preview = findViewById(R.id.imageView);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
+            previewTexture = findViewById(R.id.imageView);
+        } else {
+            previewSurface = findViewById(R.id.imageView);
+        }
 
         registerBroadcastReceiver();
 
@@ -838,6 +873,7 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
         // update values
         this.updateShowedValues();
 
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.CUPCAKE) {
         // Implement a listener to receive updates
         lightsSensorListener = new SensorEventListener() {
             @Override
@@ -852,6 +888,9 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
 
             }
         };
+		}  else {
+			lightsSensorListener = null;
+		}
     }
 
     @Override
@@ -878,32 +917,49 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
 
         if (camera != null) {
             try {
-                camera.setPreviewTexture(preview.getSurfaceTexture());
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
+                    camera.setPreviewTexture(previewTexture.getSurfaceTexture());
+                }
                 camera.setPreviewCallback(this);
 
                 Camera.Size previewSize = camera.getParameters().getPreviewSize();
                 float aspect = (float) previewSize.width / previewSize.height;
 
-                int previewSurfaceWidth = preview.getWidth();
-                int previewSurfaceHeight = preview.getHeight();
-
-                LayoutParams lp = preview.getLayoutParams();
+                int previewSurfaceWidth = 0;
+                int previewSurfaceHeight = 0;
+                LayoutParams lp;
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
+                    previewSurfaceWidth = previewTexture.getWidth();
+                    previewSurfaceHeight = previewTexture.getHeight();
+                    lp = previewTexture.getLayoutParams();
+                } else {
+                    previewSurfaceWidth = previewSurface.getWidth();
+                    previewSurfaceHeight = previewSurface.getHeight();
+                    lp = previewSurface.getLayoutParams();
+                }
 
                 // fix orientation
                 if (this.getResources().getConfiguration().orientation != Configuration.ORIENTATION_LANDSCAPE) {
                     // portrait
-                    camera.setDisplayOrientation(90);
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.FROYO) {
+						camera.setDisplayOrientation(90);
+					}
                     lp.height = previewSurfaceHeight;
                     lp.width = (int) (previewSurfaceHeight / aspect);
 
                 } else {
                     // landscape
-                    camera.setDisplayOrientation(0);
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.FROYO) {
+						camera.setDisplayOrientation(0);
+					}
                     lp.width = previewSurfaceWidth;
                     lp.height = (int) (previewSurfaceWidth / aspect);
                 }
-
-                preview.setLayoutParams(lp);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
+                    previewTexture.setLayoutParams(lp);
+                } else {
+                    previewSurface.setLayoutParams(lp);
+                }
                 camera.startPreview();
             } catch (IOException e) {
                 Log.e(EVENTS_NAME, "Cannot access system brightness:" + e.toString());

@@ -8,8 +8,8 @@ All terms described in GPL have priority under current rules.
 
 ## General rules
 
-Application never sends any information that recieved until work in any
-(explicit/implicit) way. Application does not have ability to comunicate
+Application never sends any information that received until work in any
+(explicit/implicit) way. Application does not have ability to communicate
 with any endpoint outside of device(by network or any other way of
 communication).
 

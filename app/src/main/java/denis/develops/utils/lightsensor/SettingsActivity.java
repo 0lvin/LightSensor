@@ -3,6 +3,7 @@ package denis.develops.utils.lightsensor;
 import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.os.Build;
 import android.os.Bundle;
 import android.widget.CompoundButton;
 import android.widget.SeekBar;
@@ -61,7 +62,9 @@ public class SettingsActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_settings);
+
+            setContentView(R.layout.activity_settings);
+
         sensorTextPercent = findViewById(R.id.textSensorMagnitude);
         minTextPercent = findViewById(R.id.textPercent);
         maxTextPercent = findViewById(R.id.textMaxPercent);
@@ -78,15 +81,6 @@ public class SettingsActivity extends Activity {
         SeekBar updateFrequencySeek = findViewById(R.id.updateFrequencyValue);
         SeekBar previewTimeSeek = findViewById(R.id.previewTimeValue);
         SeekBar cameraExposureSeek = findViewById(R.id.cameraExposureValue);
-        Switch registerSwitch = findViewById(R.id.switchAuto);
-        Switch registerSunSwitch = findViewById(R.id.switchAutoSun);
-
-        Switch canntChangeBrightnessSwitch = findViewById(R.id.disableChangeBrightness);
-        Switch useFootCandleSwitch = findViewById(R.id.use_foot_candle);
-        Switch useMonoPreviewSwitch = findViewById(R.id.use_mono_preview);
-        Switch useBackCameraSwitch = findViewById(R.id.useBackCamera);
-        Switch dontUseCameraSwitch = findViewById(R.id.dontUseCamera);
-        Switch lowPowerSwitch = findViewById(R.id.low_power_enabled);
 
         SharedPreferences prefs = getSharedPreferences(MainActivity.PREFERENCES_NAME, MODE_PRIVATE);
         cameraExposureValue = prefs.getInt(MainActivity.CAMERA_EXPOSURE, 1);
@@ -95,7 +89,7 @@ public class SettingsActivity extends Activity {
         maxBatteryLastPercentValue = prefs.getInt(MainActivity.MAX_BATTERY_PERCENT_VALUE, 100);
         lastMagnitudeSensorValue = prefs.getInt(MainActivity.MAGNITUDE_SENSOR_VALUE, 10);
         updateFrequencyValue = prefs.getInt(MainActivity.FREQUENCY_VALUE, 4);
-        previewTimeValue = prefs.getInt(MainActivity.PREVIEW_TIME_ACTIVE, 300);
+        previewTimeValue = prefs.getInt(MainActivity.PREVIEW_TIME_ACTIVE, 1);
 
         updateTextValues();
 
@@ -246,7 +240,30 @@ public class SettingsActivity extends Activity {
             }
         });
 
-        useFootCandleSwitch.setChecked(prefs.getBoolean(MainActivity.USE_FOOT_CANDLE_FOR_SHOW, false));
+        useFootCandle = prefs.getBoolean(MainActivity.USE_FOOT_CANDLE_FOR_SHOW, false);
+        useMonoPreview =  prefs.getBoolean(MainActivity.USE_MONO_PREVIEW, true);
+        serviceEnabled = prefs.getBoolean(MainActivity.AUTO_VALUE, false);
+        sunServiceEnabled = prefs.getBoolean(MainActivity.AUTO_SUN_VALUE, false);
+        useBack = prefs.getBoolean(MainActivity.USE_BACK_CAMERA, false);
+        cannotChangeBrightness = prefs.getBoolean(MainActivity.DISABLE_CHANGE_BRIGHTNESS, false);
+        dontUseCamera =prefs.getBoolean(MainActivity.DISABLE_CAMERA, false);
+        lowPowerEnabled = prefs.getBoolean(MainActivity.BATTERY_LOW, false);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
+            this.onCreateIceCreamSandwich(prefs);
+        }
+    }
+
+    private void onCreateIceCreamSandwich(SharedPreferences prefs) {
+        Switch registerSwitch = findViewById(R.id.switchAuto);
+        Switch registerSunSwitch = findViewById(R.id.switchAutoSun);
+        Switch canntChangeBrightnessSwitch = findViewById(R.id.disableChangeBrightness);
+        Switch useFootCandleSwitch = findViewById(R.id.use_foot_candle);
+        Switch useMonoPreviewSwitch = findViewById(R.id.use_mono_preview);
+        Switch useBackCameraSwitch = findViewById(R.id.useBackCamera);
+        Switch dontUseCameraSwitch = findViewById(R.id.dontUseCamera);
+        Switch lowPowerSwitch = findViewById(R.id.low_power_enabled);
+        useFootCandleSwitch.setChecked(useFootCandle);
         useFootCandleSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
@@ -254,9 +271,8 @@ public class SettingsActivity extends Activity {
                 savePreferences();
             }
         });
-        useFootCandle = useFootCandleSwitch.isChecked();
 
-        useMonoPreviewSwitch.setChecked(prefs.getBoolean(MainActivity.USE_MONO_PREVIEW, true));
+        useMonoPreviewSwitch.setChecked(useMonoPreview);
         useMonoPreviewSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
@@ -264,9 +280,8 @@ public class SettingsActivity extends Activity {
                 savePreferences();
             }
         });
-        useMonoPreview = useMonoPreviewSwitch.isChecked();
 
-        registerSwitch.setChecked(prefs.getBoolean(MainActivity.AUTO_VALUE, false));
+        registerSwitch.setChecked(serviceEnabled);
         registerSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
@@ -274,9 +289,8 @@ public class SettingsActivity extends Activity {
                 savePreferences();
             }
         });
-        serviceEnabled = registerSwitch.isChecked();
 
-        registerSunSwitch.setChecked(prefs.getBoolean(MainActivity.AUTO_SUN_VALUE, false));
+        registerSunSwitch.setChecked(sunServiceEnabled);
         registerSunSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
@@ -284,9 +298,9 @@ public class SettingsActivity extends Activity {
                 savePreferences();
             }
         });
-        sunServiceEnabled = registerSunSwitch.isChecked();
 
-        useBackCameraSwitch.setChecked(prefs.getBoolean(MainActivity.USE_BACK_CAMERA, false));
+
+        useBackCameraSwitch.setChecked(useBack);
         useBackCameraSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
@@ -294,9 +308,8 @@ public class SettingsActivity extends Activity {
                 savePreferences();
             }
         });
-        useBack = useBackCameraSwitch.isChecked();
 
-        canntChangeBrightnessSwitch.setChecked(prefs.getBoolean(MainActivity.DISABLE_CHANGE_BRIGHTNESS, false));
+        canntChangeBrightnessSwitch.setChecked(cannotChangeBrightness);
         canntChangeBrightnessSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
@@ -304,9 +317,8 @@ public class SettingsActivity extends Activity {
                 savePreferences();
             }
         });
-        cannotChangeBrightness = canntChangeBrightnessSwitch.isChecked();
 
-        dontUseCameraSwitch.setChecked(prefs.getBoolean(MainActivity.DISABLE_CAMERA, false));
+        dontUseCameraSwitch.setChecked(dontUseCamera);
         dontUseCameraSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
@@ -314,9 +326,8 @@ public class SettingsActivity extends Activity {
                 savePreferences();
             }
         });
-        dontUseCamera = dontUseCameraSwitch.isChecked();
 
-        lowPowerSwitch.setChecked(prefs.getBoolean(MainActivity.BATTERY_LOW, false));
+        lowPowerSwitch.setChecked(lowPowerEnabled);
         lowPowerSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
@@ -324,7 +335,6 @@ public class SettingsActivity extends Activity {
                 savePreferences();
             }
         });
-        lowPowerEnabled = lowPowerSwitch.isChecked();
     }
 
     private void savePreferences() {
@@ -345,6 +355,8 @@ public class SettingsActivity extends Activity {
         edit.putInt(MainActivity.MAGNITUDE_SENSOR_VALUE, this.lastMagnitudeSensorValue);
         edit.putInt(MainActivity.FREQUENCY_VALUE, this.updateFrequencyValue);
         edit.putInt(MainActivity.PREVIEW_TIME_ACTIVE, this.previewTimeValue);
-        edit.apply();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
+            edit.apply();
+        }
     }
 }
