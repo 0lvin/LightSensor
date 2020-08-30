@@ -142,7 +142,7 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
     }
 
     private int[] getMinimalFps(Camera.Parameters params) {
-		List<int[]> fpsValue;
+        List<int[]> fpsValue;
         if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.GINGERBREAD) {
             return null;
         }
@@ -531,8 +531,8 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
                     edit.putBoolean(MainActivity.AUTO_SUN_VALUE, false);
                 }
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
-					edit.apply();
-				}
+                    edit.apply();
+                }
                 break;
             }
             case IWANTCAMERA: {
@@ -548,8 +548,8 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
                     edit.putBoolean(MainActivity.DISABLE_CAMERA, true);
                 }
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
-					edit.apply();
-				}
+                    edit.apply();
+                }
                 break;
             }
             case IWANTCHANGESETTINGS: {
@@ -569,9 +569,9 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
                         edit.putBoolean(MainActivity.DISABLE_CHANGE_BRIGHTNESS, true);
                     }
                 }
-				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
-					edit.apply();
-				}
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
+                    edit.apply();
+                }
                 break;
             }
         }
@@ -598,13 +598,13 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
         if (newTimeValue > 0) {
             edit.putLong(RUNTIME_VALUE, newTimeValue);
         }
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
-			edit.apply();
-		}
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
+            edit.apply();
+        }
     }
 
     private void destroyLightSensor() {
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.CUPCAKE && lightsSensorListener != null && sensorManager != null) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.CUPCAKE && lightsSensorListener != null && sensorManager != null) {
             sensorManager.unregisterListener(lightsSensorListener);
         }
         sensorManager = null;
@@ -782,21 +782,21 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
     }
 
     private void initLightSensor() {
-		if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.CUPCAKE) {
-	        // Obtain references to the SensorManager and the Light Sensor
-	        sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
-	        if (sensorManager != null) {
-	            List<Sensor> sensors = sensorManager.getSensorList(Sensor.TYPE_LIGHT);
-	            if (sensors.size() > 0) {
-	                usedLightSensor = true;
-	                final Sensor lightSensor = sensorManager.getDefaultSensor(Sensor.TYPE_LIGHT);
-	                if (lightsSensorListener != null && sensorManager != null) {
-	                    sensorManager.registerListener(
-	                            lightsSensorListener, lightSensor, SensorManager.SENSOR_DELAY_NORMAL);
-	                }
-	            }
-	        }
-		}
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.CUPCAKE) {
+            // Obtain references to the SensorManager and the Light Sensor
+            sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
+            if (sensorManager != null) {
+                List<Sensor> sensors = sensorManager.getSensorList(Sensor.TYPE_LIGHT);
+                if (sensors.size() > 0) {
+                    usedLightSensor = true;
+                    final Sensor lightSensor = sensorManager.getDefaultSensor(Sensor.TYPE_LIGHT);
+                    if (lightsSensorListener != null && sensorManager != null) {
+                        sensorManager.registerListener(
+                                lightsSensorListener, lightSensor, SensorManager.SENSOR_DELAY_NORMAL);
+                    }
+                }
+            }
+        }
     }
 
     @Override
@@ -873,24 +873,24 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
         // update values
         this.updateShowedValues();
 
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.CUPCAKE) {
-        // Implement a listener to receive updates
-        lightsSensorListener = new SensorEventListener() {
-            @Override
-            public void onSensorChanged(SensorEvent event) {
-                lastLightSensorValue = event.values[0] * getSensorMagnitude();
-                updateShowedValues();
-                updateBrightness();
-            }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.CUPCAKE) {
+            // Implement a listener to receive updates
+            lightsSensorListener = new SensorEventListener() {
+                @Override
+                public void onSensorChanged(SensorEvent event) {
+                    lastLightSensorValue = event.values[0] * getSensorMagnitude();
+                    updateShowedValues();
+                    updateBrightness();
+                }
 
-            @Override
-            public void onAccuracyChanged(Sensor sensor, int accuracy) {
+                @Override
+                public void onAccuracyChanged(Sensor sensor, int accuracy) {
 
-            }
-        };
-		}  else {
-			lightsSensorListener = null;
-		}
+                }
+            };
+        } else {
+            lightsSensorListener = null;
+        }
     }
 
     @Override
@@ -942,16 +942,16 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
                 if (this.getResources().getConfiguration().orientation != Configuration.ORIENTATION_LANDSCAPE) {
                     // portrait
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.FROYO) {
-						camera.setDisplayOrientation(90);
-					}
+                        camera.setDisplayOrientation(90);
+                    }
                     lp.height = previewSurfaceHeight;
                     lp.width = (int) (previewSurfaceHeight / aspect);
 
                 } else {
                     // landscape
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.FROYO) {
-						camera.setDisplayOrientation(0);
-					}
+                        camera.setDisplayOrientation(0);
+                    }
                     lp.width = previewSurfaceWidth;
                     lp.height = (int) (previewSurfaceWidth / aspect);
                 }

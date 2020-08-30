@@ -63,7 +63,7 @@ public class SettingsActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-            setContentView(R.layout.activity_settings);
+        setContentView(R.layout.activity_settings);
 
         sensorTextPercent = findViewById(R.id.textSensorMagnitude);
         minTextPercent = findViewById(R.id.textPercent);
