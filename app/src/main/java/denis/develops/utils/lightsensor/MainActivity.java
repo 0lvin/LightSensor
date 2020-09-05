@@ -778,7 +778,11 @@ public class MainActivity extends Activity implements Camera.PreviewCallback, Ca
                 public void onClick(View view) {
                     Date current = new Date();
                     activeTimeLeftBase = current.getTime() / 1000;
-                    previewTexture.setOnClickListener(null);
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
+                        previewTexture.setOnClickListener(null);
+                    } else {
+                        previewSurface.setOnClickListener(null);
+                    }
 
                     if (!dontUseCamera) {
                         initCamera(useMonoPreview);
@@ -987,7 +991,11 @@ public class MainActivity extends Activity implements Camera.PreviewCallback, Ca
                 if (this.getResources().getConfiguration().orientation != Configuration.ORIENTATION_LANDSCAPE) {
                     // portrait
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.FROYO) {
-                        camera.setDisplayOrientation(90);
+                        try {
+                            camera.setDisplayOrientation(90);
+                        } catch (RuntimeException e) {
+                            Log.e(EVENTS_NAME, "Cannot set display orientation:" + e.toString());
+                        }
                     }
                     lp.height = previewSurfaceHeight;
                     lp.width = (int) (previewSurfaceHeight / aspect);
@@ -995,7 +1003,11 @@ public class MainActivity extends Activity implements Camera.PreviewCallback, Ca
                 } else {
                     // landscape
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.FROYO) {
-                        camera.setDisplayOrientation(0);
+                        try {
+                            camera.setDisplayOrientation(0);
+                        } catch (RuntimeException e) {
+                            Log.e(EVENTS_NAME, "Cannot set display orientation:" + e.toString());
+                        }
                     }
                     lp.width = previewSurfaceWidth;
                     lp.height = (int) (previewSurfaceWidth / aspect);
