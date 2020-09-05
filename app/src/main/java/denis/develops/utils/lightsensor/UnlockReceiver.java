@@ -147,6 +147,7 @@ public class UnlockReceiver extends BroadcastReceiver {
                 Intent intent = new Intent(context, UnlockReceiver.class);
                 PendingIntent alarmIntent = PendingIntent.getBroadcast(context, 0, intent, 0);
                 alarmMgr.setInexactRepeating(AlarmManager.RTC, 0, AlarmManager.INTERVAL_HALF_HOUR, alarmIntent);
+                Log.e(EVENTS_NAME, "Registered alarm receiver");
             } catch (Exception e) {
                 Log.e(EVENTS_NAME, "Cannot register alarm receiver:" + e.toString());
             }
@@ -155,8 +156,9 @@ public class UnlockReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
+        String action = intent.getAction();
         // init alarms and broadcast
-        if (Intent.ACTION_BOOT_COMPLETED.equals(intent.getAction())) {
+        if (Intent.ACTION_BOOT_COMPLETED.equals(action)) {
             this.registerReceivers(context);
         }
 
@@ -168,15 +170,17 @@ public class UnlockReceiver extends BroadcastReceiver {
             return;
         }
 
+        Log.i(EVENTS_NAME, "Received intent: " + ((action != null) ? action : "unknown"));
+
         // check battery status
-        if (Intent.ACTION_BATTERY_LOW.equals(intent.getAction())) {
+        if (Intent.ACTION_BATTERY_LOW.equals(action)) {
             SharedPreferences.Editor edit = prefs.edit();
             edit.putBoolean(MainActivity.BATTERY_LOW, true);
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
                 edit.apply();
             }
-        } else if (Intent.ACTION_BATTERY_OKAY.equals(intent.getAction()) ||
-                Intent.ACTION_POWER_CONNECTED.equals(intent.getAction())) {
+        } else if (Intent.ACTION_BATTERY_OKAY.equals(action) ||
+                Intent.ACTION_POWER_CONNECTED.equals(action)) {
             SharedPreferences.Editor edit = prefs.edit();
             edit.putBoolean(MainActivity.BATTERY_LOW, false);
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
@@ -186,9 +190,9 @@ public class UnlockReceiver extends BroadcastReceiver {
 
         double summ_value = this.getLightByCalendar(prefs);
         boolean smooth_change = !(
-                Intent.ACTION_SCREEN_ON.equals(intent.getAction()) ||
-                        Intent.ACTION_USER_PRESENT.equals(intent.getAction()) ||
-                        Intent.ACTION_USER_UNLOCKED.equals(intent.getAction()));
+                Intent.ACTION_SCREEN_ON.equals(action) ||
+                        Intent.ACTION_USER_PRESENT.equals(action) ||
+                        Intent.ACTION_USER_UNLOCKED.equals(action));
         this.setBrightness(context, prefs, summ_value, smooth_change);
     }
 
