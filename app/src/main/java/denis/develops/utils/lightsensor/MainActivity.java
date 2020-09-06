@@ -823,7 +823,7 @@ public class MainActivity extends Activity implements Camera.PreviewCallback, Ca
         stateText += getString(R.string.low_battery) + " " + this.low_battery;
 
         textAuthor.setText(stateText);
-        if (dontUseCamera && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.HONEYCOMB) {
+        if (dontUseCamera && android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
             previewTexture.setAlpha(lastLightSensorValue / SensorManager.LIGHT_OVERCAST);
         }
 
@@ -968,6 +968,8 @@ public class MainActivity extends Activity implements Camera.PreviewCallback, Ca
             try {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
                     camera.setPreviewTexture(previewTexture.getSurfaceTexture());
+                } else {
+                    camera.setPreviewDisplay(previewSurface.getHolder());
                 }
                 camera.setPreviewCallback(this);
 
