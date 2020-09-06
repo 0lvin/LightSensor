@@ -19,6 +19,8 @@ public class SettingsActivity extends Activity {
     private TextView updateFrequencyText;
     private TextView previewTimeText;
     private TextView previewTimeTitle;
+    private TextView timerPeriodText;
+    private TextView timerPeriodTitle;
     private TextView updateFrequencyTitle;
     private int lastMagnitudeSensorValue = 10;
     private int cameraExposureValue = 0;
@@ -35,6 +37,7 @@ public class SettingsActivity extends Activity {
     private boolean lowPowerEnabled = false;
     private int updateFrequencyValue = 1;
     private int previewTimeValue = 1;
+    private int timerPeriodValue = 1;
 
     private void updateTextValues() {
         cameraExposureText.setText(Integer.toString(cameraExposureValue));
@@ -57,6 +60,13 @@ public class SettingsActivity extends Activity {
             previewTimeTitle.setText(getString(R.string.previewTimeTitle) + ", " + getString(R.string.days));
             previewTimeText.setText(Integer.toString((1 << previewTimeValue) / 60 / 24));
         }
+        if (timerPeriodValue < 4) {
+            timerPeriodTitle.setText(getString(R.string.timerPeriodTitle) + ", " + getString(R.string.minutes));
+            timerPeriodText.setText(Integer.toString((1 << timerPeriodValue) * 5));
+        } else {
+            timerPeriodTitle.setText(getString(R.string.timerPeriodTitle) + ", " + getString(R.string.hours));
+            timerPeriodText.setText(Integer.toString((1 << timerPeriodValue) / 12));
+        }
     }
 
     @Override
@@ -73,6 +83,8 @@ public class SettingsActivity extends Activity {
         cameraExposureText = findViewById(R.id.textCameraExposure);
         previewTimeText = findViewById(R.id.textPreviewTime);
         previewTimeTitle = findViewById(R.id.textPreviewTimeTitle);
+        timerPeriodText = findViewById(R.id.textTimerPeriod);
+        timerPeriodTitle = findViewById(R.id.textTimerPeriodTitle);
         maxBatteryTextPercent = findViewById(R.id.textBatteryMaxPercent);
         SeekBar magnitudeSensorSeek = findViewById(R.id.sensorMagnitudeValue);
         SeekBar minPercentSeek = findViewById(R.id.percentValue);
@@ -80,6 +92,7 @@ public class SettingsActivity extends Activity {
         SeekBar maxBatteryPercentSeek = findViewById(R.id.percentBatteryMaxValue);
         SeekBar updateFrequencySeek = findViewById(R.id.updateFrequencyValue);
         SeekBar previewTimeSeek = findViewById(R.id.previewTimeValue);
+        SeekBar timerPeriodSeek = findViewById(R.id.timerPeriodValue);
         SeekBar cameraExposureSeek = findViewById(R.id.cameraExposureValue);
 
         SharedPreferences prefs = getSharedPreferences(MainActivity.PREFERENCES_NAME, MODE_PRIVATE);
@@ -90,6 +103,7 @@ public class SettingsActivity extends Activity {
         lastMagnitudeSensorValue = prefs.getInt(MainActivity.MAGNITUDE_SENSOR_VALUE, 10);
         updateFrequencyValue = prefs.getInt(MainActivity.FREQUENCY_VALUE, 4);
         previewTimeValue = prefs.getInt(MainActivity.PREVIEW_TIME_ACTIVE, 1);
+        timerPeriodValue = prefs.getInt(MainActivity.TIMER_PERIOD_VALUE, 4);
 
         updateTextValues();
 
@@ -120,6 +134,27 @@ public class SettingsActivity extends Activity {
             @Override
             public void onProgressChanged(SeekBar seekBar, int position, boolean b) {
                 previewTimeValue = position;
+                updateTextValues();
+                savePreferences();
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
+            }
+        });
+
+        timerPeriodSeek.setMax(6);
+        timerPeriodSeek.setProgress(timerPeriodValue);
+        timerPeriodSeek.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int position, boolean b) {
+                timerPeriodValue = position;
                 updateTextValues();
                 savePreferences();
             }
@@ -241,12 +276,12 @@ public class SettingsActivity extends Activity {
         });
 
         useFootCandle = prefs.getBoolean(MainActivity.USE_FOOT_CANDLE_FOR_SHOW, false);
-        useMonoPreview =  prefs.getBoolean(MainActivity.USE_MONO_PREVIEW, true);
+        useMonoPreview = prefs.getBoolean(MainActivity.USE_MONO_PREVIEW, true);
         serviceEnabled = prefs.getBoolean(MainActivity.AUTO_VALUE, false);
         sunServiceEnabled = prefs.getBoolean(MainActivity.AUTO_SUN_VALUE, false);
         useBack = prefs.getBoolean(MainActivity.USE_BACK_CAMERA, false);
         cannotChangeBrightness = prefs.getBoolean(MainActivity.DISABLE_CHANGE_BRIGHTNESS, false);
-        dontUseCamera =prefs.getBoolean(MainActivity.DISABLE_CAMERA, false);
+        dontUseCamera = prefs.getBoolean(MainActivity.DISABLE_CAMERA, false);
         lowPowerEnabled = prefs.getBoolean(MainActivity.BATTERY_LOW, false);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
@@ -355,6 +390,7 @@ public class SettingsActivity extends Activity {
         edit.putInt(MainActivity.MAGNITUDE_SENSOR_VALUE, this.lastMagnitudeSensorValue);
         edit.putInt(MainActivity.FREQUENCY_VALUE, this.updateFrequencyValue);
         edit.putInt(MainActivity.PREVIEW_TIME_ACTIVE, this.previewTimeValue);
+        edit.putInt(MainActivity.TIMER_PERIOD_VALUE, this.timerPeriodValue);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
             edit.apply();
         }

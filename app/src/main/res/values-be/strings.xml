@@ -45,4 +45,6 @@
     <string name="preview_second">60</string>
     <string name="cameraExposureTitle">Экспазіцыя камеры</string>
     <string name="exposure_value">+1</string>
+    <string name="timerPeriodTitle">Перыяд абнаўлення па часе</string>
+    <string name="timer_period">15</string>
 </resources>

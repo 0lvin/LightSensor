@@ -59,6 +59,7 @@ public class MainActivity extends Activity implements Camera.PreviewCallback, Ca
     final static String LATITUDE_VALUE = "LatitudeValue";
     final static String FREQUENCY_VALUE = "UpdateFrequencyValue";
     final static String PREVIEW_TIME_ACTIVE = "PreviewTimeActive";
+    final static String TIMER_PERIOD_VALUE = "TimerPeriodValue";
     private final static String MAGNITUDE_VALUE = "MagnitudeValue";
     private final static String RUNTIME_VALUE = "LastRunTime";
     private final static String EVENTS_NAME = "LightsSensors";
@@ -137,9 +138,9 @@ public class MainActivity extends Activity implements Camera.PreviewCallback, Ca
         return (sum * step) / size;
     }
 
-    private void registerBroadcastReceiver() {
+    private void registerBroadcastReceiver(int timerPeriodValue) {
         UnlockReceiver mUnlockReceiver = new UnlockReceiver();
-        mUnlockReceiver.registerReceivers(getApplicationContext());
+        mUnlockReceiver.registerReceivers(getApplicationContext(), timerPeriodValue);
     }
 
     private int[] getMinimalFps(Camera.Parameters params) {
@@ -867,10 +868,11 @@ public class MainActivity extends Activity implements Camera.PreviewCallback, Ca
             previewSurface = findViewById(R.id.imageView);
         }
 
-        registerBroadcastReceiver();
+        SharedPreferences prefs = getSharedPreferences(PREFERENCES_NAME, MODE_PRIVATE);
+        int timerPeriodValue = prefs.getInt(MainActivity.TIMER_PERIOD_VALUE, 4);
+        registerBroadcastReceiver(timerPeriodValue);
 
         this.startTime = new Date();
-        SharedPreferences prefs = getSharedPreferences(PREFERENCES_NAME, MODE_PRIVATE);
         lastMagnitudeSensorValue = prefs.getInt(MAGNITUDE_SENSOR_VALUE, 10);
         minPercentValueSettings = prefs.getInt(MIN_PERCENT_VALUE, 0);
         maxPercentValueSettings = prefs.getInt(MAX_PERCENT_VALUE, 100);

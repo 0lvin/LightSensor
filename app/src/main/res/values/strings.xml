@@ -48,4 +48,6 @@
     <string name="preview_second">60</string>
     <string name="cameraExposureTitle">Camera Exposure</string>
     <string name="exposure_value">+1</string>
+    <string name="timerPeriodTitle">Update period by time of day</string>
+    <string name="timer_period">15</string>
 </resources>

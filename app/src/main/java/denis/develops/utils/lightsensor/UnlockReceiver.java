@@ -113,7 +113,7 @@ public class UnlockReceiver extends BroadcastReceiver {
         return UT;
     }
 
-    public void registerReceivers(Context context) {
+    public void registerReceivers(Context context, int timerPeriodValue) {
         try {
             Log.i(EVENTS_NAME, "Register unlock receiver.");
             final IntentFilter theFilter = new IntentFilter();
@@ -146,7 +146,7 @@ public class UnlockReceiver extends BroadcastReceiver {
                 AlarmManager alarmMgr = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
                 Intent intent = new Intent(context, UnlockReceiver.class);
                 PendingIntent alarmIntent = PendingIntent.getBroadcast(context, 0, intent, 0);
-                alarmMgr.setInexactRepeating(AlarmManager.RTC, 0, AlarmManager.INTERVAL_HALF_HOUR, alarmIntent);
+                alarmMgr.setInexactRepeating(AlarmManager.RTC, 0, AlarmManager.INTERVAL_FIFTEEN_MINUTES / 3 * (1 << timerPeriodValue), alarmIntent);
                 Log.e(EVENTS_NAME, "Registered alarm receiver");
             } catch (Exception e) {
                 Log.e(EVENTS_NAME, "Cannot register alarm receiver:" + e.toString());
@@ -157,12 +157,14 @@ public class UnlockReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
         String action = intent.getAction();
+        SharedPreferences prefs = context.getSharedPreferences(MainActivity.PREFERENCES_NAME, Context.MODE_PRIVATE);
+        int timerPeriodValue = prefs.getInt(MainActivity.TIMER_PERIOD_VALUE, 4);
+
         // init alarms and broadcast
         if (Intent.ACTION_BOOT_COMPLETED.equals(action)) {
-            this.registerReceivers(context);
+            this.registerReceivers(context, timerPeriodValue);
         }
 
-        SharedPreferences prefs = context.getSharedPreferences(MainActivity.PREFERENCES_NAME, Context.MODE_PRIVATE);
         boolean auto_change = prefs.getBoolean(MainActivity.AUTO_VALUE, false);
         boolean sun_change = prefs.getBoolean(MainActivity.AUTO_SUN_VALUE, false);
         if (!auto_change && !sun_change) {
