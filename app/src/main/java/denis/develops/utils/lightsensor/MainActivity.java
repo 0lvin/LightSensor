@@ -1021,9 +1021,13 @@ public class MainActivity extends Activity implements Camera.PreviewCallback, Ca
                 } else {
                     previewSurface.setLayoutParams(lp);
                 }
-                camera.startPreview();
+                try {
+                    camera.startPreview();
+                } catch (RuntimeException e) {
+                    Log.e(EVENTS_NAME, "Can not start preview:" + e.toString());
+                }
             } catch (IOException e) {
-                Log.e(EVENTS_NAME, "Cannot access system brightness:" + e.toString());
+                Log.e(EVENTS_NAME, "Can not configure preview:" + e.toString());
             }
         }
     }
