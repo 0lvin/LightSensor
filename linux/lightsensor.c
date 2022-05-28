@@ -15,6 +15,7 @@
 
 #define DEVICE_NAME 		"/dev/lightsensor"
 #define EVENT_TYPE_LIGHT	ABS_MISC
+
 void enable_sensor(int dev_fd, int en) {
 	int err = 0;
 	int flags = en ? 1 : 0;
@@ -144,9 +145,9 @@ int update_backlight(char* control, double value, int offset) {
 	// try to open contol and update value
 	int changed = 0;
 	char file_name_buffer[256] = {0};
-	sprintf(file_name_buffer, "/sys/class/%s/max_brightness", control);
+	sprintf(file_name_buffer, "/sys/%s/max_brightness", control);
 	int max_file = open(file_name_buffer, O_RDONLY);
-	sprintf(file_name_buffer, "/sys/class/%s/brightness", control);
+	sprintf(file_name_buffer, "/sys/%s/brightness", control);
 	int value_file = open(file_name_buffer, O_WRONLY);
 	if (max_file > 0 && value_file > 0) {
 		char max_value_char[6] = {0};
@@ -173,22 +174,24 @@ int update_backlight(char* control, double value, int offset) {
 void update_lights(double value) {
 	// update value for all known contols
 	char backlight_dirs[][50] = {
-		"backlight/acpi_video0",
-		"leds/lcd-backlight"
+		"devices/platform/backlight/backlight/backlight",
+		"class/backlight/acpi_video0",
+		"class/leds/lcd-backlight"
 	};
 	int i, changed = 0;
 	// update by virtual values like acpi
-	for (i = 0; i < 2; i++) {
-		if (update_backlight(backlight_dirs[i], value, 0))
+	for (i = 0; i < 3; i++) {
+		if (update_backlight(backlight_dirs[i], value, 0)) {
 			changed = 1;
+			break;
+		}
 	}
 	// we can't change virtual control, try update by direct contol
 	if (!changed) {
-		char backlight_direct_dirs[][50] = {
-			"backlight/radeon_bl0",
-		};
-		for (i = 0; i < 1; i++) {
-			update_backlight(backlight_direct_dirs[i], value, 1);
+		char backlight_direct_dirs[50] = {0};
+		for (i = 0; i < 16; i++) {
+			sprintf(backlight_direct_dirs, "backlight/radeon_bl%d", i);
+			update_backlight(backlight_direct_dirs, value, 1);
 		}
 	}
 }
