@@ -13,7 +13,8 @@
 #include <errno.h>
 
 
-#define DEVICE_NAME 		"/dev/lightsensor"
+#define DEVICE_NAME			"/dev/lightsensor"
+#define MAX_DEVICES			16
 #define EVENT_TYPE_LIGHT	ABS_MISC
 
 void enable_sensor(int dev_fd, int en) {
@@ -50,7 +51,7 @@ double get_abs_value(int dev_fd) {
 	return lux;
 }
 
-#define min_value(a, b) ((a) < (b)) ? (a) : (b)
+#define min_value(a, b) (((a) < (b)) ? (a) : (b))
 
 /*
  * Parse list input devices from /proc/bus/input/devices
@@ -74,7 +75,11 @@ char * get_device(const char * dev_name) {
 	while ((res = read(fd, buffer + read_done, 256)) > 0) {
 		read_done += res;
 		if ((read_done + 256) > file_size) {
-			buffer = realloc(buffer, file_size + 256);
+			char * reallocated = realloc(buffer, file_size + 256);
+			if (!reallocated) {
+				break;
+			}
+			buffer = reallocated;
 			file_size += 256;
 		}
 	}
@@ -151,8 +156,8 @@ int update_backlight(char* control, double value, int offset) {
 	int value_file = open(file_name_buffer, O_WRONLY);
 	if (max_file > 0 && value_file > 0) {
 		char max_value_char[6] = {0};
-		char value_char[6] = {0};
 		if (read(max_file, max_value_char, 5)) {
+			char value_char[6] = {0};
 			int max_value = strtol(max_value_char, NULL, 10);
 			int for_set = max_value * value / 10240 + offset;
 			if (for_set >= max_value) {
@@ -189,14 +194,14 @@ void update_lights(double value) {
 	// we can't change virtual control, try update by direct contol
 	if (!changed) {
 		char backlight_direct_dirs[50] = {0};
-		for (i = 0; i < 16; i++) {
+		for (i = 0; i < MAX_DEVICES; i++) {
 			sprintf(backlight_direct_dirs, "backlight/radeon_bl%d", i);
 			update_backlight(backlight_direct_dirs, value, 1);
 		}
 	}
 }
 
-int v4l_read_frame(int fd, char * image_memmory, size_t full_size) {
+int v4l_read_frame(int fd, const char * image_memmory, size_t full_size) {
 	struct v4l2_buffer buf = {0};
 
 	buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
@@ -446,18 +451,24 @@ int main() {
 	} else {
 		printf("Light sensor has not found.\n");
 	}
-	int cam_value = v4l_cam_value("/dev/video0");
-	if (cam_value >= 0) {
-		printf("v4l value = %d\n", cam_value);
-		sum_light += cam_value;
-		count_light ++;
+	char camera_device[50] = {0};
+	for(int i = 0; i < MAX_DEVICES; i++) {
+		sprintf(camera_device, "/dev/video%d", i);
+		int cam_value = v4l_cam_value(camera_device);
+		if (cam_value >= 0) {
+			printf("v4l value = %d\n", cam_value);
+			sum_light += cam_value;
+			count_light ++;
+		} else {
+			printf("Camera %s is unsupported\n", camera_device);
+		}
 	}
 
 	if (count_light) {
 		sum_light = sum_light / count_light;
 	}
 
-	printf("Light value = %d lux\n", cam_value);
+	printf("Light value = %f lux\n", sum_light);
 
 	update_lights(sum_light);
 	// flashlight
