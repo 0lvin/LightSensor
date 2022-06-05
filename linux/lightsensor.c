@@ -152,27 +152,34 @@ int update_backlight(char* control, double value, int offset) {
 	char file_name_buffer[256] = {0};
 	sprintf(file_name_buffer, "/sys/%s/max_brightness", control);
 	int max_file = open(file_name_buffer, O_RDONLY);
-	sprintf(file_name_buffer, "/sys/%s/brightness", control);
-	int value_file = open(file_name_buffer, O_WRONLY);
-	if (max_file > 0 && value_file > 0) {
-		char max_value_char[6] = {0};
-		if (read(max_file, max_value_char, 5)) {
-			char value_char[6] = {0};
-			int max_value = strtol(max_value_char, NULL, 10);
-			int for_set = max_value * value / 10240 + offset;
-			if (for_set >= max_value) {
-				for_set = max_value - 1;
+	if (max_file >= 0) {
+		sprintf(file_name_buffer, "/sys/%s/brightness", control);
+		int value_file = open(file_name_buffer, O_WRONLY);
+		if (value_file >= 0) {
+			char max_value_char[6] = {0};
+			if (read(max_file, max_value_char, 5)) {
+				char value_char[6] = {0};
+				int max_value = strtol(max_value_char, NULL, 10);
+				// can set only to devices wit real max
+				if (max_value > 0) {
+					int for_set = max_value * value / 10240 + offset;
+					if (for_set >= max_value) {
+						for_set = max_value - 1;
+					}
+					sprintf(value_char, "%d", for_set);
+					write(value_file, value_char, strlen(value_char));
+					printf("Update '%s' to %s/%d\n", file_name_buffer, value_char, max_value);
+					changed = 1;
+				}
 			}
-			sprintf(value_char, "%d", for_set);
-			write(value_file, value_char, strlen(value_char));
-			printf("Update '%s' to %s/%d\n", file_name_buffer, value_char, max_value);
-			changed = 1;
+			close(value_file);
+		} else {
+			printf("Can't open backlight control '%s'\n", file_name_buffer);
 		}
+		close(max_file);
 	} else {
 		printf("Can't open backlight control '%s'\n", file_name_buffer);
 	}
-	close(max_file);
-	close(value_file);
 	return changed;
 }
 
