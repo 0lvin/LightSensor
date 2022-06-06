@@ -271,7 +271,7 @@ void v4l_show_capabilities(char *device_name, int fd) {
 		return;
 	}
 
-	printf("%s:\t", device_name);
+	printf("%s:\tcapabilities: ", device_name);
 
 	if (cap.capabilities & V4L2_CAP_VIDEO_CAPTURE) {
 		printf("V4L2_CAP_VIDEO_CAPTURE,");
@@ -572,7 +572,7 @@ int main() {
 		sprintf(camera_device, "/dev/video%d", i);
 		int cam_value = v4l_cam_value(camera_device);
 		if (cam_value >= 0) {
-			printf("v4l value = %d\n", cam_value);
+			printf("%s:\tlight value: %d lux\n", camera_device, cam_value);
 			sum_light += cam_value;
 			count_light ++;
 		}
