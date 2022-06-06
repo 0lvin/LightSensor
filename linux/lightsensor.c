@@ -264,16 +264,119 @@ int v4l_wait_shot(int fd) {
 	}
 }
 
+void v4l_show_capabilities(char *device_name, int fd) {
+	struct v4l2_capability cap = {0};
+	// capabilities
+	if (ioctl(fd, VIDIOC_QUERYCAP, &cap) < 0) {
+		return;
+	}
+
+	printf("%s:\t", device_name);
+
+	if (cap.capabilities & V4L2_CAP_VIDEO_CAPTURE) {
+		printf("V4L2_CAP_VIDEO_CAPTURE,");
+	}
+	if (cap.capabilities & V4L2_CAP_VIDEO_OUTPUT) {
+		printf("V4L2_CAP_VIDEO_OUTPUT,");
+	}
+	if (cap.capabilities & V4L2_CAP_VIDEO_OVERLAY) {
+		printf("V4L2_CAP_VIDEO_OVERLAY,");
+	}
+	if (cap.capabilities & V4L2_CAP_VBI_CAPTURE) {
+		printf("V4L2_CAP_VBI_CAPTURE,");
+	}
+	if (cap.capabilities & V4L2_CAP_VBI_OUTPUT) {
+		printf("V4L2_CAP_VBI_OUTPUT,");
+	}
+	if (cap.capabilities & V4L2_CAP_SLICED_VBI_CAPTURE) {
+		printf("V4L2_CAP_SLICED_VBI_CAPTURE,");
+	}
+	if (cap.capabilities & V4L2_CAP_SLICED_VBI_OUTPUT) {
+		printf("V4L2_CAP_SLICED_VBI_OUTPUT,");
+	}
+	if (cap.capabilities & V4L2_CAP_RDS_CAPTURE) {
+		printf("V4L2_CAP_RDS_CAPTURE,");
+	}
+	if (cap.capabilities & V4L2_CAP_VIDEO_OUTPUT_OVERLAY) {
+		printf("V4L2_CAP_VIDEO_OUTPUT_OVERLAY,");
+	}
+	if (cap.capabilities & V4L2_CAP_HW_FREQ_SEEK) {
+		printf("V4L2_CAP_HW_FREQ_SEEK,");
+	}
+	if (cap.capabilities & V4L2_CAP_RDS_OUTPUT) {
+		printf("V4L2_CAP_RDS_OUTPUT,");
+	}
+	if (cap.capabilities & V4L2_CAP_VIDEO_CAPTURE_MPLANE) {
+		printf("V4L2_CAP_VIDEO_CAPTURE_MPLANE,");
+	}
+	if (cap.capabilities & V4L2_CAP_VIDEO_OUTPUT_MPLANE) {
+		printf("V4L2_CAP_VIDEO_OUTPUT_MPLANE,");
+	}
+	if (cap.capabilities & V4L2_CAP_VIDEO_M2M_MPLANE) {
+		printf("V4L2_CAP_VIDEO_M2M_MPLANE,");
+	}
+	if (cap.capabilities & V4L2_CAP_VIDEO_M2M) {
+		printf("V4L2_CAP_VIDEO_M2M,");
+	}
+	if (cap.capabilities & V4L2_CAP_TUNER) {
+		printf("V4L2_CAP_TUNER,");
+	}
+	if (cap.capabilities & V4L2_CAP_AUDIO) {
+		printf("V4L2_CAP_AUDIO,");
+	}
+	if (cap.capabilities & V4L2_CAP_RADIO) {
+		printf("V4L2_CAP_RADIO,");
+	}
+	if (cap.capabilities & V4L2_CAP_MODULATOR) {
+		printf("V4L2_CAP_MODULATOR,");
+	}
+	if (cap.capabilities & V4L2_CAP_SDR_CAPTURE) {
+		printf("V4L2_CAP_SDR_CAPTURE,");
+	}
+	if (cap.capabilities & V4L2_CAP_EXT_PIX_FORMAT) {
+		printf("V4L2_CAP_EXT_PIX_FORMAT,");
+	}
+	if (cap.capabilities & V4L2_CAP_SDR_OUTPUT) {
+		printf("V4L2_CAP_SDR_OUTPUT,");
+	}
+	if (cap.capabilities & V4L2_CAP_META_CAPTURE) {
+		printf("V4L2_CAP_META_CAPTURE,");
+	}
+	if (cap.capabilities & V4L2_CAP_READWRITE) {
+		printf("V4L2_CAP_READWRITE,");
+	}
+	if (cap.capabilities & V4L2_CAP_ASYNCIO) {
+		printf("V4L2_CAP_ASYNCIO,");
+	}
+	if (cap.capabilities & V4L2_CAP_STREAMING) {
+		printf("V4L2_CAP_STREAMING,");
+	}
+	if (cap.capabilities & V4L2_CAP_META_OUTPUT) {
+		printf("V4L2_CAP_META_OUTPUT,");
+	}
+	if (cap.capabilities & V4L2_CAP_TOUCH) {
+		printf("V4L2_CAP_TOUCH,");
+	}
+	if (cap.capabilities & V4L2_CAP_IO_MC) {
+		printf("V4L2_CAP_IO_MC,");
+	}
+	if (cap.capabilities & V4L2_CAP_DEVICE_CAPS) {
+		printf("V4L2_CAP_DEVICE_CAPS,");
+	}
+
+	printf("\n");
+}
+
 int v4l_check_capabilities(int fd) {
 	struct v4l2_capability cap = {0};
+	int capabilities = V4L2_CAP_VIDEO_CAPTURE | V4L2_CAP_STREAMING;
+
 	// capabilities
 	if (ioctl(fd, VIDIOC_QUERYCAP, &cap) < 0) {
 		return -1;
 	}
-	if (!(cap.capabilities & V4L2_CAP_VIDEO_CAPTURE)){
-		return -1;
-	}
-	if (!(cap.capabilities & V4L2_CAP_STREAMING)) {
+
+	if (!((cap.capabilities & capabilities) == capabilities)) {
 		return -1;
 	}
 	return 0;
@@ -385,6 +488,12 @@ void v4l_stop_capture(int fd, char* image_memmory, int buf_length) {
 int v4l_cam_value(char*  device_name) {
 	int fd = open(device_name, O_RDWR | O_NONBLOCK /* required */);
 
+	if (fd < 0) {
+		return -1;
+	}
+
+	v4l_show_capabilities(device_name, fd);
+
 	if (v4l_check_capabilities(fd)) {
 		return -1;
 	}
@@ -466,8 +575,6 @@ int main() {
 			printf("v4l value = %d\n", cam_value);
 			sum_light += cam_value;
 			count_light ++;
-		} else {
-			printf("Camera %s is unsupported\n", camera_device);
 		}
 	}
 
