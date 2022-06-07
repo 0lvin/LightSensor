@@ -17,14 +17,14 @@
 #define MAX_DEVICES			16
 #define EVENT_TYPE_LIGHT	ABS_MISC
 
-void enable_sensor(int dev_fd, int en) {
+static void enable_sensor(int dev_fd, int en) {
 	int err = 0;
 	int flags = en ? 1 : 0;
 	err = ioctl(dev_fd, LIGHTSENSOR_IOCTL_ENABLE, &flags);
 	printf("Enable %d => %d\n", err, flags);
 }
 
-int get_status(int dev_fd) {
+static int get_status(int dev_fd) {
 	int flags = 0;
 	int err;
 	err = ioctl(dev_fd, LIGHTSENSOR_IOCTL_GET_ENABLED, &flags);
@@ -32,7 +32,7 @@ int get_status(int dev_fd) {
 	return flags;
 }
 
-double get_abs_value(int dev_fd) {
+static double get_abs_value(int dev_fd) {
 	struct input_absinfo absinfo;
 	int err;
 	int predefined_lux[10] = {
@@ -56,7 +56,7 @@ double get_abs_value(int dev_fd) {
 /*
  * Parse list input devices from /proc/bus/input/devices
  */
-char * get_device(const char * dev_name) {
+static char * get_device(const char * dev_name) {
 	int fd = open("/proc/bus/input/devices", O_RDONLY);
 	if (fd < 0) {
 		printf("can't get input list\n");
@@ -146,7 +146,7 @@ char * get_device(const char * dev_name) {
 	return NULL;
 }
 
-int update_backlight(char* control, double value, int offset) {
+static int update_backlight(char* control, double value, int offset) {
 	// try to open contol and update value
 	int changed = 0;
 	char file_name_buffer[256] = {0};
@@ -177,13 +177,11 @@ int update_backlight(char* control, double value, int offset) {
 			printf("Can't open backlight control '%s'\n", file_name_buffer);
 		}
 		close(max_file);
-	} else {
-		printf("Can't open backlight control '%s'\n", file_name_buffer);
 	}
 	return changed;
 }
 
-void update_lights(double value) {
+static void update_lights(double value) {
 	// update value for all known contols
 	char backlight_dirs[][50] = {
 		"devices/platform/backlight/backlight/backlight",
@@ -203,12 +201,19 @@ void update_lights(double value) {
 		char backlight_direct_dirs[50] = {0};
 		for (i = 0; i < MAX_DEVICES; i++) {
 			sprintf(backlight_direct_dirs, "backlight/radeon_bl%d", i);
-			update_backlight(backlight_direct_dirs, value, 1);
+			if (update_backlight(backlight_direct_dirs, value, 1)) {
+				changed = 1;
+				break;
+			}
 		}
+	}
+
+	if (!changed) {
+		printf("Can't open backlight control.\n");
 	}
 }
 
-int v4l_read_frame(int fd, const char * image_memmory, size_t full_size) {
+static int v4l_read_frame(int fd, const char * image_memmory, size_t full_size) {
 	struct v4l2_buffer buf = {0};
 
 	buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
@@ -234,7 +239,7 @@ int v4l_read_frame(int fd, const char * image_memmory, size_t full_size) {
 	return result;
 }
 
-int v4l_wait_shot(int fd) {
+static int v4l_wait_shot(int fd) {
 	for (;;) {
 		fd_set fds;
 		struct timeval tv;
@@ -264,7 +269,7 @@ int v4l_wait_shot(int fd) {
 	}
 }
 
-void v4l_capabilities2name(int capabilities) {
+static void v4l_capabilities2name(int capabilities) {
 
 	if (capabilities & V4L2_CAP_VIDEO_CAPTURE) {
 		printf("V4L2_CAP_VIDEO_CAPTURE,");
@@ -358,28 +363,35 @@ void v4l_capabilities2name(int capabilities) {
 	}
 }
 
-void v4l_show_capabilities(char *device_name, int fd) {
+static void v4l_show_capabilities(char *device_name, int fd) {
 	struct v4l2_capability cap = {0};
 	// capabilities
 	if (ioctl(fd, VIDIOC_QUERYCAP, &cap) < 0) {
 		return;
 	}
 
+	printf("\n");
+
 	printf("%s:\tdriver: %s\n", device_name, cap.driver);
 	printf("%s:\tcard: %s\n", device_name, cap.card);
 	printf("%s:\tbus_info: %s\n", device_name, cap.bus_info);
-	printf("%s:\tversion: %d\n", device_name, cap.version);
+	printf("%s:\tversion: %d.%d.%d\n", device_name,
+		cap.version / 65536,
+		(cap.version / 256) % 256,
+		cap.version % 256);
 
 	printf("%s:\tcapabilities: ", device_name);
 	v4l_capabilities2name(cap.capabilities);
 	printf("\n");
 
-	printf("%s:\tdevice_caps: ", device_name);
-	v4l_capabilities2name(cap.device_caps);
-	printf("\n");
+	if (cap.capabilities & V4L2_CAP_DEVICE_CAPS) {
+		printf("%s:\tdevice_caps: ", device_name);
+		v4l_capabilities2name(cap.device_caps);
+		printf("\n");
+	}
 }
 
-int v4l_check_capabilities(int fd) {
+static int v4l_check_capabilities(int fd) {
 	struct v4l2_capability cap = {0};
 	int capabilities = V4L2_CAP_VIDEO_CAPTURE | V4L2_CAP_STREAMING;
 
@@ -394,7 +406,7 @@ int v4l_check_capabilities(int fd) {
 	return 0;
 }
 
-int v4l_check_format(int fd) {
+static int v4l_check_format(char *device_name, int fd) {
 	struct v4l2_format fmt = {0};
 	// set out format
 	int width = 320;
@@ -421,11 +433,11 @@ int v4l_check_format(int fd) {
 
 	if (fmt.fmt.pix.height != height)
 		height = fmt.fmt.pix.height;
-	printf("%dx%d shot\n", width, height);
+	printf("%s:\t%dx%d shot\n", device_name, width, height);
 	return 0;
 }
 
-int v4l_check_avaible_shots(int fd) {
+static int v4l_check_avaible_shots(char *device_name, int fd) {
 	// check avaible shots
 	struct v4l2_requestbuffers req = {0};
 	req.count = 1;
@@ -434,11 +446,11 @@ int v4l_check_avaible_shots(int fd) {
 	if (ioctl(fd, VIDIOC_REQBUFS, &req) < 0) {
 		return -1;
 	}
-	printf("%d frames at once\n", req.count);
+	printf("%s:\t%d frames at once\n", device_name, req.count);
 	return 0;
 }
 
-int v4l_mmap_frame(int fd, char ** image_memmory, int * buf_length) {
+static int v4l_mmap_frame(char *device_name, int fd, char **image_memmory, int *buf_length) {
 	if(!image_memmory || !buf_length) {
 		return -1;
 	}
@@ -460,11 +472,11 @@ int v4l_mmap_frame(int fd, char ** image_memmory, int * buf_length) {
 	if (MAP_FAILED == image_memmory) {
 		return -1;
 	}
-	printf("maped %d bytes\n", *buf_length);
+	printf("%s:\tmapped %d bytes\n", device_name, *buf_length);
 	return 0;
 }
 
-int v4l_start_capture(int fd) {
+static int v4l_start_capture(int fd) {
 	// start capture
 	struct v4l2_buffer buf_capture = {0};
 	buf_capture.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
@@ -485,21 +497,24 @@ int v4l_start_capture(int fd) {
 	return 0;
 }
 
-void v4l_stop_capture(int fd, char* image_memmory, int buf_length) {
+static void v4l_stop_capture(char *device_name, int fd, char* image_memmory, int buf_length) {
 	enum v4l2_buf_type type;
 	type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 
 	if (ioctl(fd, VIDIOC_STREAMOFF, &type) < 0) {
-		printf("can't release device\n");
+		printf("%s: \tcan't release device\n", device_name);
 	}
+
 	if (munmap(image_memmory, buf_length) < 0) {
-		printf("can't free memmory\n");
+		printf("%s: \tcan't free memmory\n", device_name);
 	}
 }
 
-int v4l_cam_value(char*  device_name) {
-	int fd = open(device_name, O_RDWR | O_NONBLOCK /* required */);
+static int v4l_cam_value(char*  device_name) {
+	int buf_length = 0, res = 0, fd;
+	char* image_memmory = NULL;
 
+	fd = open(device_name, O_RDWR | O_NONBLOCK /* required */);
 	if (fd < 0) {
 		return -1;
 	}
@@ -510,31 +525,25 @@ int v4l_cam_value(char*  device_name) {
 		return -1;
 	}
 
-	if (v4l_check_format(fd)) {
+	if (v4l_check_format(device_name, fd)) {
 		return -1;
 	}
 
-	if(v4l_check_avaible_shots(fd)) {
+	if(v4l_check_avaible_shots(device_name, fd)) {
 		return -1;
 	}
 
-	int buf_length = 0;
-	char* image_memmory = NULL;
-	if(v4l_mmap_frame(fd, &image_memmory, &buf_length)) {
+	if(v4l_mmap_frame(device_name, fd, &image_memmory, &buf_length)) {
 		return -1;
 	}
 
-	if(v4l_start_capture(fd)) {
-		v4l_stop_capture(fd, image_memmory, buf_length);
-		return -1;
+	if(!v4l_start_capture(fd)) {
+		if(!v4l_wait_shot(fd)) {
+			res = v4l_read_frame(fd, image_memmory, buf_length);
+		}
 	}
 
-	int res = 0;
-	if(v4l_wait_shot(fd) == 0) {
-		res = v4l_read_frame(fd, image_memmory, buf_length);
-	}
-
-	v4l_stop_capture(fd, image_memmory, buf_length);
+	v4l_stop_capture(device_name, fd, image_memmory, buf_length);
 
 	close(fd);
 	if (res >= 0) {
@@ -594,7 +603,7 @@ int main() {
 		sum_light = sum_light / count_light;
 	}
 
-	printf("Light value = %f lux\n", sum_light);
+	printf("\nLight value = %f lux\n", sum_light);
 
 	update_lights(sum_light);
 	// flashlight
