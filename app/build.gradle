@@ -1,21 +1,29 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 30
-    buildToolsVersion '30.0.2'
-
+    compileSdkVersion 34
+    buildToolsVersion '34.0.0'
+    namespace "denis.develops.utils.lightsensor"
     defaultConfig {
         applicationId "denis.develops.utils.lightsensor"
         minSdkVersion 1
-        targetSdkVersion 30
-        versionCode 25
-        versionName "0.0.21"
+        targetSdkVersion 34
+        versionCode 26
+        versionName "0.0.22"
     }
     buildTypes {
         release {
             minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
+    }
+    dependenciesInfo {
+        includeInApk false
+        includeInBundle false
     }
 }
 

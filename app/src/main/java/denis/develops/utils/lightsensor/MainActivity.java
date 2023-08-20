@@ -685,18 +685,17 @@ public class MainActivity extends Activity implements Camera.PreviewCallback, Ca
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         // Handle item selection
-        switch (item.getItemId()) {
-            case R.id.settings:
-                Intent intent = new Intent(this, SettingsActivity.class);
-                this.startActivity(intent);
-                return true;
-            case R.id.source_code:
-                Intent browserIntent = new Intent(Intent.ACTION_VIEW,
-                        Uri.parse("https://github.com/0lvin/LightSensor"));
-                startActivity(browserIntent);
-                return true;
-            default:
-                return super.onOptionsItemSelected(item);
+        if (item.getItemId() == R.id.settings) {
+            Intent intent = new Intent(this, SettingsActivity.class);
+            this.startActivity(intent);
+            return true;
+        } else if (item.getItemId() == R.id.source_code) {
+            Intent browserIntent = new Intent(Intent.ACTION_VIEW,
+                    Uri.parse("https://github.com/0lvin/LightSensor"));
+            startActivity(browserIntent);
+            return true;
+        } else {
+            return super.onOptionsItemSelected(item);
         }
     }
 

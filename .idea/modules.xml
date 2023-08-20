@@ -2,8 +2,11 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/AndroidStudioProjects-LightSensor.iml" filepath="$PROJECT_DIR$/.idea/modules/AndroidStudioProjects-LightSensor.iml" group="LightSensor" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/LightSensor-app.iml" filepath="$PROJECT_DIR$/.idea/modules/app/LightSensor-app.iml" group="LightSensor/app" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/LightSensor.iml" filepath="$PROJECT_DIR$/.idea/modules/LightSensor.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/LightSensor.app.iml" filepath="$PROJECT_DIR$/.idea/modules/app/LightSensor.app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/LightSensor.app.androidTest.iml" filepath="$PROJECT_DIR$/.idea/modules/app/LightSensor.app.androidTest.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/LightSensor.app.main.iml" filepath="$PROJECT_DIR$/.idea/modules/app/LightSensor.app.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/LightSensor.app.unitTest.iml" filepath="$PROJECT_DIR$/.idea/modules/app/LightSensor.app.unitTest.iml" />
     </modules>
   </component>
 </project>

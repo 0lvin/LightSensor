@@ -1,3 +1,4 @@
 *.o
 lightsensor-arm
 lightsensor-native
+lightsensor-x86
