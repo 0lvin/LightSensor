@@ -1,6 +1,10 @@
 # LightSensor
 
-Manage screen brightness by image from front camera.
+Manage screen brightness by image from front camera. 
+
+The app, originally titled 'camera as light sensor' on Google Play, has been discontinued and removed from the store. It is no longer supported and will not receive any further updates. 
+
+Feel free to fork and customize.
 
 # Privacy Policy
 
